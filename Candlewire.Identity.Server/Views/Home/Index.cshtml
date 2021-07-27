@@ -1,0 +1,85 @@
+@model IndexViewModel
+
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+<link rel="stylesheet" href="~/css/home-index.css" />
+<script type="text/javascript" src="~/js/home-index.js"></script>
+<div class="home-page">
+    <div class="row">
+        <div class="col-12">
+            <div class="row" style="padding-top:140px;">
+                <div class="profile-photo-temp">
+                    <div class="profile-photo-letter">@Model.FirstName.Substring(0, 1)</div>
+                </div>
+                <div class="col-12">
+                    <div style="color:black; text-align:center;height:100px;">
+                        <div style="font-weight:bold;">Welcome back @(Model.FirstName).</div>
+                        <div>Access your applications and account information below...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="col-12 home-panel margin-top-xs-15" style="">
+                <div class="row border-bottom">
+                    <div class="home-left col-8">
+                        <h5 class="home-title" style="">Personal Info</h5>
+                        <div class="home-description" style="color:gray;">Ensuring your personal information is up to will help make your user experience better.</div>
+                        <p></p>
+                    </div>
+                    <div class="home-right col-4">
+                        <div class="home-image fa fa-user-edit float-right waves-effect waves-light" style="font-size:50px;width:65px;height:65px;color:#659EC7"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="home-bottom col-12 padding-top-xs-15 padding-bottom-xs-0">
+                        <a href="/Manage/Profile" class="float-right" style="text-decoration:none;color:#F08080;">Manage your personal info ></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="col-12 home-panel margin-top-xs-15">
+                <div class="row border-bottom">
+                    <div class="home-left col-8">
+                        <h5 class="home-title">Security Info</h5>
+                        <div class="home-description" style="color:gray;">Manage passwords, Two factor authentication and other settings to help keep your account secure.</div>
+                        <p></p>
+                    </div>
+                    <div class="home-right col-4">
+                        <div class="home-image fa fa-user-shield float-right waves-effect waves-light" style="font-size:50px;width:65px;height:65px;color:#99C68E;"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="home-bottom col-12 padding-top-xs-15 padding-bottom-xs-0">
+                        <a href="/Manage/Security" class="float-right" style="text-decoration:none;color:#F08080;">Manage your security info ></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="col-12 home-panel margin-top-xs-15">
+                <div class="row border-bottom">
+                    <div class="home-left col-8">
+                        <h5 class="home-title" style="">My Applications</h5>
+                        <div class="home-description" style="color:gray;">
+
+                        </div>
+                        <p></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="home-bottom col-12 padding-top-xs-15 padding-bottom-xs-0">
+                        <div style="text-decoration:none;color:silver;text-align:center;">New applications are coming soon!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

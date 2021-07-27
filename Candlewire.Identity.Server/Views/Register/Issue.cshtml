@@ -1,0 +1,33 @@
+﻿@model IssueViewModel
+
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+<div class="profile-page">
+    <partial name="_ValidationSummary" />
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Registration Error</h3>
+                    <div class="card-subtitle">An unexpected error occurred during the registration process</div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-xs-12 col-md-12 col-xl-12">
+                                <div class="form-group">
+                                    @Html.Raw(Model.IssueHtml)
+                                    <div class="col-md-12">Click below to go back to the signup page and start over.</div>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-md-12 col-xl-12">
+                                @Html.ActionLink("Start Over", "Signup", "Register", null, new { @class = "terms-cancel-button btn btn-secondary col-sm-12 col-md-3 col-xl-3" })
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,39 @@
+﻿@model SendViewModel
+@{ ViewData["Title"] = "Send Verification Code"; }
+
+@{
+    var info = new System.Globalization.CultureInfo("en-US", false).TextInfo;
+    var providers = Model.AvailableProviders.Select(a => new SelectListItem { Value = a, Text = a }).ToList();
+    var selections = new SelectList(providers, "Value", "Text");
+}
+
+<div class="row">
+    <div class="col-xs-12 col-md-8 offset-md-2">
+        <partial name="_ValidationSummary" />
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Two Factor Authentication</h3>
+                <div class="card-subtitle">How do you want to receive your verification code?</div>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Account" asp-action="Send" asp-route-returnurl="@Model.ReturnUrl" method="post" class="form-horizontal">
+                    <input asp-for="RememberMe" type="hidden" />
+                    <input asp-for="ReturnUrl" type="hidden" value="@Model.ReturnUrl" />
+                    <div class="row">
+                        <div class="form-group col-xs-12 col-md-8">
+                            <label asp-for="SelectedProvider">Verification Code Delivery Method</label>
+                            @Html.DropDownListFor(a => a.SelectedProvider, selections, null, new { @class = "form-control" })
+                            <span asp-validation-for="SelectedProvider" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-xs-12 col-md-12">
+                            <button type="submit" class="btn btn-primary col-xs-12 col-md-4 col-xl-4">Send Code</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,110 @@
+﻿@model SignupViewModel
+
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+<link rel="stylesheet" href="~/css/register-signup.css" />
+<script type="text/javascript" src="~/js/register-signup.js"></script>
+<script src="~/lib/jquery-captcha/dist/jquery-captcha.min.js"></script>
+
+<div class="profile-page">
+    <div class="row">
+        <div class="col-xs-12 col-md-12">
+            <partial name="_ValidationSummary" />
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Sign Up</h3>
+                    <div class="card-subtitle">@(Model.AccountSource.ToLower() == "internal" ? "Lets get things set up!" : "We just need a little more info...")</div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row">
+                            <div class="form-group hidden-field">
+                                @Html.HiddenFor(a => a.ReturnUrl)
+                            </div>
+                            <div class="form-group hidden-field">
+                                @Html.HiddenFor(a => a.AccountSource)
+                            </div>
+                            <div class="col-md-6">
+                                <h5>User Info</h5>
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label asp-for="FirstName"></label>
+                                        @Html.EditorFor(a => a.FirstName, new { htmlAttributes = new { @class = "form-control" } })
+                                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label asp-for="LastName"></label>
+                                        @Html.EditorFor(a => a.LastName, new { htmlAttributes = new { @class = "form-control" } })
+                                        <span asp-validation-for="LastName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-md-4">
+                                        <label asp-for="Nickname"></label>
+                                        @Html.EditorFor(a => a.Nickname, new { htmlAttributes = new { @class = "form-control" } })
+                                        <span asp-validation-for="Nickname" class="text-danger"></span>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label>
+                                            <label asp-for="Birthdate"></label>
+                                            <input asp-for="Birthdate" type="text" class="birth-date-field form-control" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Contact Info</h5>
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label asp-for="EmailAddress"></label>
+                                        <input asp-for="EmailAddress" class="email-address-field form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Setup a Password</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Password" class="password-label"></label>
+                                            <div class="input-group password-toggle">
+                                                <input asp-for="Password" class="form-control password-field" />
+                                                <div class="input-group-addon">
+                                                    <a href=""><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
+                                                </div>
+                                            </div>
+                                            <div class="password-information">
+                                                <div class="password-meter"><div class="password-progress"></div></div>
+                                                <span class="password-strength"></span>
+                                            </div>
+                                            <span asp-validation-for="Password" class="hidden-field"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="ConfirmPassword"></label>
+                                            <div class="input-group confirm-input-group">
+                                                <input asp-for="ConfirmPassword" class="form-control confirm-field" />
+                                                <span class="input-group-addon confirm-image" aria-hidden="true" title="Passwords match"><span class="fa fa-check-circle"></span></span>
+                                                <span asp-validation-for="ConfirmPassword" class="hidden-field"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary col-sm-12 col-md-3 col-xl-2">Next</button>
+                            @Html.ActionLink("Cancel", "Login", "Account", null, new { @class = "btn btn-secondary col-sm-12 col-md-3 col-xl-2" })
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

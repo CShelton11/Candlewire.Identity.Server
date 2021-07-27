@@ -1,0 +1,43 @@
+﻿@model UsernameViewModel
+
+@{ ViewData["Title"] = "Change Username"; }
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+<div class="username-page row">
+    <div class="col-md-8 offset-md-2">
+        <partial name="_ValidationSummary" />
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Update Your Username</h3>
+                <div class="card-subtitle">Change your username to whatever you like</div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="row">
+                        <div class="col-md-8">
+                            Changing your username will not affect your login. 
+                        </div>
+                    </div>
+                    <p></p>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label asp-for="Username"></label>
+                                    <input asp-for="Username" class="email-address-field form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary col-xs-12 col-md-4 col-xl-4">Update Username</button>
+                            <a asp-action="Profile" class="btn btn-secondary col-xs-12 col-md-4 col-xl-4">Profile Settings</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

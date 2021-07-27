@@ -1,0 +1,30 @@
+﻿.input-group > .custom-select:not(:last-child), .input-group > .form-control:not(:last-child) {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+.input-group-addon {
+    position: absolute;
+    right: 0px;
+    height: 100%;
+    border-right: 1px solid #ced4da;
+    border-top: 1px solid #ced4da;
+    border-bottom: 1px solid #ced4da;
+    border-left:1px solid #EEEEEE;
+    background-color: transparent;
+    z-index: 10;
+    padding-top: 6px;
+    padding-left: 6px;
+    width: 30px;
+    border-radius: 0px 3px 3px 0px;
+}
+.email-input-group input {
+    padding-right:30px;
+}
+.phone-input-group input {
+    padding-right:30px;
+}
+
+/* Temp profile images */
+.profile-photo-temp { }
+.profile-photo-letter { position:absolute!important;bottom:15px!important;right:15px!important;text-align:center;width:70px;height:70px;border-radius:35px!important;background-color:#4abde8;border:3px solid silver;font-size:40px;float:right;padding:3px;color:white!important; }
+.profile-photo-camera { width:30px;height:30px;color:#ff4f5e!important;font-size:25px;position:absolute;right:15px;bottom:15px; }

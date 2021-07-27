@@ -1,0 +1,80 @@
+﻿@model LoginViewModel
+
+<div class="login-page">
+    <partial name="_ValidationSummary" />
+
+    <div class="row">
+        @if (Model.EnableLocalLogin)
+        {
+            <div class="col-xs-6 col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Candlewire Login</h3>
+                        <div class="card-subtitle">Login using your username and password</div>
+                    </div>
+                    <div class="card-body">
+                        <form asp-route="Account">
+                            <input type="hidden" asp-for="ReturnUrl" />
+                            <fieldset>
+                                <div class="form-group">
+                                    <label asp-for="Email"></label>
+                                    <input class="form-control" placeholder="Email Address" asp-for="Email" autofocus>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="Password"></label>
+                                    <input type="password" class="form-control" placeholder="Password" asp-for="Password" autocomplete="off">
+                                </div>
+                                @if (Model.AllowRememberLogin)
+                                {
+                                    <div class="form-group login-remember">
+                                        <label asp-for="RememberLogin">
+                                            <input asp-for="RememberLogin">
+                                            <strong>Remember My Login</strong>
+                                        </label>
+                                    </div>
+                                }
+
+                                <div class="row">
+                                    <div class="col-xs-12 col-md-12">
+                                        <button class="btn btn-primary col-xs-12 col-md-4" name="button" value="login">Login</button>
+                                        @Html.ActionLink("Create New Account", "Signup", "Register", null, new { @class = "btn col-xs-12 col-md-6" })
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.VisibleExternalProviders.Any())
+        {
+            <div class="col-xs-6 col-md-6 external-providers">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">3rd Party Login</h3>
+                        <div class="card-subtitle">Login using Google or Facebook</div>
+                    </div>
+                    <div class="card-body">
+                        <form asp-route="Account">
+                            <div class="row">
+                                <div class="card-body">
+                                    <ul class="list-inline">
+                                        @foreach (var provider in Model.ExternalProviders)
+                                        {
+                                            <li>
+                                                <a class="btn btn-outline-secondary col-md-6" asp-action="ExternalLogin" asp-route-provider="@provider.AuthenticationScheme" asp-route-returnUrl="@Model.ReturnUrl">
+                                                    <div class="btn-oauth btn-image @("btn-image-icon-"+provider.AuthenticationScheme.ToLower())"><span class="test">Login with @provider.AuthenticationScheme</span></div>
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

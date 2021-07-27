@@ -1,0 +1,87 @@
+﻿@model LogoutViewModel
+
+@if (Model.Authenticated == true && Model.ShowLogoutPrompt == true)
+{
+    <div class="row">
+        <div class="col-xs-12 col-md-6 offset-md-3">
+            <div class="card card-prompt">
+                <div class="card-header">
+                    <h3 class="card-title">Sign Out</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <p>Are you sure you'd like to sign out?</p>
+                            <form asp-action="Logout">
+                                <input type="hidden" name="logoutId" value="@Model.LogoutId" />
+                                <fieldset>
+                                    <div class="form-group">
+                                        <button class="btn btn-primary col-xs-12 col-md-3 col-xl-3">Yes</button>
+                                        @Html.ActionLink("Cancel", "Index", "Home", null, new { @class = "btn btn-secondary col-sm-12 col-md-4 col-xl-4" })
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.Authenticated == false)
+{
+    <div class="row">
+        <div class="col-xs-12 col-md-6 offset-md-3">
+            <div class="card card-prompt">
+                <div class="card-header">
+                    <h3 class="card-title">Signed Out</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <p>You have successfully signed out</p>
+                            <form asp-action="Logout">
+                                <fieldset>
+                                    <div class="form-group">
+                                        <a class="btn btn-primary col-sm-12 col-md-4 col-xl-4" href="/Account/Login">Sign in again</a>
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-12">
+                            @if (Model.PostLogoutRedirectUri != null)
+                            {
+                                <div>
+                                    Click <a class="PostLogoutRedirectUri" href="@Model.PostLogoutRedirectUri">here</a> to return to the
+                                    <span>@Model.ClientName</span> application.
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            @if (Model.SignOutIframeUrl != null)
+                            {
+                                <iframe width="0" height="0" class="signout" src="@Model.SignOutIframeUrl"></iframe>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @section scripts
+    {
+        @if (Model.AutomaticRedirectAfterSignOut)
+        {
+            <script src="~/js/signout-redirect.js"></script>
+        }
+    }
+}
+
+

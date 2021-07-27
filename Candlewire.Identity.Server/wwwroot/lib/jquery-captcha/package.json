@@ -1,0 +1,58 @@
+{
+  "_from": "jquery-captcha",
+  "_id": "jquery-captcha@2.3.2",
+  "_inBundle": false,
+  "_integrity": "sha512-1jntSRDGmxeVgEZoVEPupHyruNUx6G6OEoZ4UeAT7lwdQtoYgCibEhrPuGYl5k5NHEfUBlj1+VhGCQDg3BA/cA==",
+  "_location": "/jquery-captcha",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "jquery-captcha",
+    "name": "jquery-captcha",
+    "escapedName": "jquery-captcha",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/jquery-captcha/-/jquery-captcha-2.3.2.tgz",
+  "_shasum": "20a5512f4b9c732297698438a3dc993ed1f3214c",
+  "_spec": "jquery-captcha",
+  "_where": "C:\\Users\\clshe",
+  "author": {
+    "name": "BotDetect Captcha"
+  },
+  "bugs": {
+    "url": "https://captcha.com/support"
+  },
+  "bundleDependencies": false,
+  "dependencies": {},
+  "deprecated": false,
+  "description": "BotDetect Captcha jQuery Plugin (BotDetect Captcha Simple API integration for all of the jQuery versions)",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-uglify": "^2.2.0"
+  },
+  "homepage": "https://captcha.com/jquery-captcha.html",
+  "keywords": [
+    "captcha",
+    "jquery captcha",
+    "jquery captcha plugin",
+    "captcha generator",
+    "botdetect"
+  ],
+  "main": "dist/jquery-captcha.min.js",
+  "name": "jquery-captcha",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/captcha-com/jquery-captcha.git"
+  },
+  "scripts": {
+    "build": "grunt"
+  },
+  "version": "2.3.2"
+}

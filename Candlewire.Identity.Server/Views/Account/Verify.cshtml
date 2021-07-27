@@ -1,0 +1,42 @@
+﻿@model Candlewire.Identity.Server.Models.AccountViewModels.VerifyViewModel
+@{ ViewData["Title"] = "Verify Code"; }
+
+<div class="row">
+    <div class="col-xs-12 col-md-8 offset-md-2">
+        <partial name="_ValidationSummary" />
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Two Factor Authentication</h3>
+                <div class="card-subtitle">Now, to get get you logged in...</div>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Account" asp-action="Verify" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
+                    <input asp-for="Provider" type="hidden" />
+                    <input asp-for="RememberMe" type="hidden" />
+                    <input asp-for="ReturnUrl" type="hidden" value="@Model.ReturnUrl" />
+                    <div class="row">
+                        <div class="form-group col-xs-12 col-md-10">
+                            <label asp-for="Code">Please enter your verification code below</label>
+                            <input asp-for="Code" class="form-control" />
+                            <span asp-validation-for="Code" class="hidden"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-xs-12 col-md-12">
+                            <label asp-for="RememberBrowser">
+                                <input asp-for="RememberBrowser">
+                                <strong>Remember this browser</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-xs-12 col-md-12">
+                            <button type="submit" class="btn btn-primary col-xs-12 col-md-4 col-xl-4">Verify Code</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

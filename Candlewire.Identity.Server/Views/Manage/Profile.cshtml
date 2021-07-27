@@ -1,0 +1,170 @@
+﻿@model ProfileViewModel
+
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+<link rel="stylesheet" href="~/css/manage-profile.css" />
+<script type="text/javascript" src="~/js/manage-profile.js"></script>
+
+<div class="profile-page">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Basic Info</h3>
+            <div class="card-subtitle">Update information such as first name, last name, and birthdate</div>
+        </div>
+        <div class="card-body padding-top-xs-0">
+            <div class="row border-bottom padding-top-xs-15">
+                <div class="col-12">
+                    <div class="row">
+                        <div class="col-12">
+                            <div>Profile Photo</div>
+                        </div>
+                    </div>
+                    <p></p>
+                    <div class="row">
+                        <div class="col-7">
+                            <div style="color:gray">Adding a profile page helps to personalize your account so that we can put a face with the name.</div>
+                        </div>
+                        <div class="profile-photo-temp">
+                            <a class="waves-effect waves-light profile-photo-letter">@Model.FirstName.Substring(0, 1)</a>
+                            <a class="profile-photo-camera fa fa-camera-retro"></a>
+                        </div>
+                    </div>
+                    <p></p>
+                </div>
+            </div>
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Name">
+                <div class="col-12 col-md-10">
+                    <div class="row">
+                        <div class="form-group col-12 col-md-5">
+                            <label asp-for="FirstName"></label>
+                            <input asp-for="FirstName" type="text" class="firstname-field form-control form-control-readonly" readonly="readonly" />
+                        </div>
+                        <div class="form-group col-md-5">
+                            <label asp-for="LastName"></label>
+                            <input asp-for="LastName" type="text" class="lastname-field form-control form-control-readonly" readonly="readonly" />
+                        </div>
+                    </div>
+                </div>
+                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+            </a>
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Username">
+                <div class="col-12 col-md-10">
+                    <div class="row">
+                        <div class="form-group col-md-6 col-lg-6">
+                            <label asp-for="Username"></label>
+                            <input asp-for="Username" type="text" class="nickname-field form-control form-control-readonly" readonly="readonly" />
+                        </div>
+                    </div>
+                </div>
+                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+            </a>
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Nickname">
+                <div class="col-12 col-md-10">
+                    <div class="row">
+                        <div class="form-group col-md-6 col-lg-6">
+                            <label asp-for="Nickname"></label>
+                            <input asp-for="Nickname" type="text" class="nickname-field form-control form-control-readonly" readonly="readonly" />
+                        </div>
+                    </div>
+                </div>
+                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+            </a>
+            <a class="row hover-light padding-top-xs-15 min-height-100" href="/Manage/Birthdate">
+                <div class="col-12 col-md-10">
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Birthdate"></label>
+                            <input asp-for="Birthdate" type="text" class="birth-date-field form-control form-control-readonly" readonly="readonly" />
+                        </div>
+                    </div>
+                </div>
+                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="contact-card margin-top-xs-20 margin-top-md-50">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Contact Info</h3>
+                <div class="card-subtitle">Update your email address and phone number</div>
+            </div>
+            <div class="card-body padding-top-xs-0">
+                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Email">
+                    <div class="col-12 col-md-10">
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label asp-for="EmailAddress"></label>
+                                @if (Model.EmailConfirmed)
+                                {
+                                    <div class="input-group email-input-group">
+                                        <input asp-for="EmailAddress" class="email-address-field form-control form-control-readonly" readonly="readonly" />
+                                        <span class="input-group-addon" style="color:green;" aria-hidden="true" title="Verified email address"><span class="fa fa-check-circle"></span></span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="input-group email-input-group">
+                                        <input asp-for="EmailAddress" class="email-address-field form-control form-control-readonly" readonly="readonly" />
+                                        <span class="input-group-addon" style="color:red;" aria-hidden="true" title="Unverified email address"><span class="fa fa-times-circle"></span></span>
+                                    </div>
+                                    @if (!String.IsNullOrEmpty(Model.EmailAddress))
+                                    {
+                                        <div class="text-danger padding-top-xs-5">Please verify your email address</div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                </a>
+                <a class="row hover-light padding-top-xs-15 min-height-100" href="/Manage/Phone">
+                    <div class="col-12 col-md-10">
+                        <div class="row">
+                            <div class="form-group col-md-5">
+                                <label asp-for="PhoneNumber"></label>
+                                @if (Model.PhoneConfirmed)
+                                {
+                                    <div class="input-group phone-input-group">
+                                        <input asp-for="PhoneNumber" class="phone-number-field form-control form-control-readonly" readonly="readonly" />
+                                        <span class="input-group-addon" style="color:green;" aria-hidden="true" title="Verified phone number"><span class="fa fa-check-circle"></span></span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="input-group email-input-group">
+                                        <input asp-for="PhoneNumber" class="email-address-field form-control form-control-readonly" readonly="readonly" />
+                                        <span class="input-group-addon" style="color:red;" aria-hidden="true" title="Unverified phone number"><span class="fa fa-times-circle"></span></span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                </a>
+                @if ((!Model.PhoneConfirmed && !String.IsNullOrEmpty(Model.PhoneNumber)) || (!Model.EmailConfirmed && !String.IsNullOrEmpty(Model.EmailAddress)))
+                {
+                    <div class="row border-top min-height-100">
+                        <label class="col-12 padding-top-xs-15">Contact Verification</label>
+                        <div class="col-12 col-md-10">
+                            <div class="row">
+                                @if (!Model.EmailConfirmed && !String.IsNullOrEmpty(Model.EmailAddress))
+                                {
+                                    <div class="col-md-5">
+                                        <a href="/Manage/Verify?verificationType=email" class="email-verify-button btn">Verify Email</a>
+                                    </div>
+                                }
+                                @if (!Model.PhoneConfirmed && !String.IsNullOrEmpty(Model.PhoneNumber))
+                                {
+                                    <div class="col-md-5">
+                                        <a href="/Manage/Verify?verificationType=phone" class="email-verify-button btn">Verify Phone</a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

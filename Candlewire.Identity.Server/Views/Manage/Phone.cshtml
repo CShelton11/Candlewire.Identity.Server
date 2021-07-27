@@ -1,0 +1,43 @@
+﻿@model PhoneViewModel
+
+@{ ViewData["Title"] = "Change Nickname"; }
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+<div class="phone-page row">
+    <div class="col-md-8 offset-md-2">
+        <partial name="_ValidationSummary" />
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Update Your Email Address</h3>
+                <div class="card-subtitle">Keeping your phone number up-to-date</div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="row">
+                        <div class="col-md-8">
+                            Keeping your phone number up-to-date ensures that we are sending notifications and messages to the right place...
+                        </div>
+                    </div>
+                    <p></p>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label asp-for="PhoneNumber"></label>
+                                    <input asp-for="PhoneNumber" class="phone-number-field form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary col-xs-12 col-md-4 col-xl-4">Update Phone</button>
+                            <a asp-action="Profile" class="btn btn-secondary col-xs-12 col-md-4 col-xl-4">Profile Settings</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

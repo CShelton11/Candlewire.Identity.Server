@@ -1,0 +1,51 @@
+﻿@model Candlewire.Identity.Server.Models.RegisterViewModels.VerifyViewModel
+
+@{ 
+    ViewData["Title"] = "SendVerificationEmail";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-8 col-sm-8 offset-md-2">
+        <partial name="_ValidationSummary" />
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Verify Account</h3>
+                <div class="card-subtitle">Just need to validate your email address...</div>
+            </div>
+            <div class="card-body">
+                <form asp-action="Verify" method="post">
+                    <input type="text" class="hidden-field" asp-for="ReturnUrl" />
+                    <input type="text" class="hidden-field" asp-for="VerificationEmail" />
+                    <div class="row">
+                        <div class="col-md-12"><b>We've sent an email to @Model.VerificationEmail with a verification code.</b></div>
+                        <div class="col-md-12">Please enter the code from the email below.</div>
+                        <div class="col-md-12 text-danger">This code will expire in 5 minutes.</div>
+                    </div>
+
+                    <p></p>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label asp-for="VerificationCode"></label>
+                                <input type="text" asp-for="VerificationCode" class="form-control" />
+                                <span asp-validation-for="VerificationCode" class="hidden"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary col-sm-12 col-md-6 col-xl-4">Verify Account</button>
+                                @Html.ActionLink("Return To Login", "Login", "Account", null, new { @class = "btn btn-secondary col-sm-12 col-md-6 col-xl-4" })
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

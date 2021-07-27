@@ -1,0 +1,101 @@
+﻿@using IdentityServer4.Extensions
+@using Newtonsoft.Json;
+
+@model BaseViewModel;
+
+@{
+    string name = null;
+    string controller = ViewContext.RouteData.Values["controller"].ToString().ToLower();
+    string action = ViewContext.RouteData.Values["action"].ToString().ToLower();
+    var authenticated = Context.User?.IsAuthenticated() ?? false;
+    bool navigable = false;
+
+    if (authenticated)
+    {
+        /* Show the navigation menu by default if authenticated */
+        navigable = true;
+
+        /* Special conditions where the menu should never be available */
+        if (controller == "account") { navigable = false; }
+        if (controller == "consent") { navigable = false; }
+        if (controller == "register") { navigable = false; }
+        if (controller == "manage" && action == "verify") { navigable = false; }
+    }
+
+    if (!true.Equals(ViewData["signed-out"]))
+    {
+        name = Context.User?.GetDisplayName();
+    }
+
+    var homeclass = ViewContext.RouteData.Values["controller"].ToString().ToLower() == "home" ? "btn-info" : "btn-light";
+    var profileclass = ViewContext.RouteData.Values["action"].ToString().ToLower() == "profile" ? "btn-info" : "btn-light";
+    var securityclass = ViewContext.RouteData.Values["action"].ToString().ToLower() == "security" ? "btn-info" : "btn-light";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Candlewire</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.19.1/css/mdb.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" integrity="sha512-mSYUmp1HYZDFaVKK//63EcZq4iFWFjxSL+Z3T/aCt4IO9Cejm03q3NKKYN6pFQzY0SBOr8h+eCIAZHPXcpZaNw==" crossorigin="anonymous" />
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/jquery-captcha/dist/jquery-captcha.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.19.1/js/mdb.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js" integrity="sha512-T/tUfKSV1bihCnd+MxKD0Hm1uBBroVYBOYSk1knyvQ9VyZJpc/ALb4P0r6ubwVPSGB2GvjeoMAJJImBG12TiaQ==" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/css/site.css" />
+    <script src="~/js/site.js"></script>
+
+    @RenderSection("scripts", required: false)
+</head>
+<body>
+    <nav class="navbar navbar-expand-md">
+        <!-- Brand -->
+        <a class="navbar-brand" href="/Home/Index"><div class="navbar-logo"></div></a>
+
+        <!-- Toggler/collapsibe Button -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-links">
+            <span class="navbar-toggler-icon fa fa-bars"></span>
+        </button>
+
+        <!-- Navbar links -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbar-links">
+            @await Html.PartialAsync("_Navbar")
+        </div>
+    </nav>
+
+    <div class="body-content">
+        <div class="container-fluid padding-left-md-0 padding-left-md-0">
+            <div class="row">
+                <div class="col-md-12 col-xs-12">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-3 col-lg-3">
+                            @if (navigable)
+                            {
+                            <div class="overflow-horizontal-scroll-xs overflow-vertical-none-md">
+                                <a class="btn @homeclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Home page" href="/Home/Index"><i class="fa fa-user"></i> Home</a>
+                                <a class="btn @profileclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Manage basic profile information" href="/Manage/Profile"><i class="fa fa-user"></i> Profile</a>
+                                <a class="btn @securityclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Manage password and security settings" href="/Manage/Security"><i class="fa fa-shield-alt"></i> Security</a>
+                            </div>
+                            }
+                        </div>
+                        <div class="col-xs-12 col-md-8 col-lg-8 col-xl-6 margin-top-xs-15 margin-top-md-0">
+                            @RenderBody()
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Toast")
+</body>
+</html>

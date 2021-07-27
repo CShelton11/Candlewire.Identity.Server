@@ -1,0 +1,53 @@
+﻿@model ForgotViewModel
+@{ ViewData["Title"] = "Forgot your password?"; }
+
+@if (Model.Completed == false)
+{
+    <div class="row">
+        <div class="col-xs-12 col-md-8 offset-md-2">
+            <partial name="_ValidationSummary" />
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Forgot Password</h3>
+                    <div class="card-subtitle">We'll send a link to your email address to reset your password</div>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Account" asp-action="Forgot" method="post" class="form-horizontal">
+                        <div class="row">
+                            <div class="form-group col-xs-12 col-md-12">
+                                <label asp-for="Email"></label>
+                                <input asp-for="Email" class="form-control col-xs-12 col-md-12" />
+                                <span asp-validation-for="Email" class="hidden"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-xs-12 col-md-12">
+                                <button type="submit" class="btn btn-primary col-xs-12 col-md-3 col-xl-3">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-xs-12 col-md-6 offset-md-3">
+            <div class="card card-prompt">
+                <div class="card-header">
+                    <h3 class="card-title">Forgot Password</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <p>We've sent you an email with instructions on how to reset your password</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,31 @@
+﻿.input-group > .custom-select:not(:last-child), .input-group > .form-control:not(:last-child) {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+.input-group-addon {
+    position: absolute;
+    right: 0px;
+    height: 100%;
+    border-right: 1px solid #ced4da;
+    border-top: 1px solid #ced4da;
+    border-bottom: 1px solid #ced4da;
+    border-left:1px solid #EEEEEE;
+    background-color: transparent;
+    z-index: 10;
+    padding-top: 6px;
+    padding-left: 6px;
+    width: 30px;
+    border-radius: 0px 3px 3px 0px;
+    color: green;
+}
+.confirm-input-group input {
+    padding-right: 30px;
+}
+
+/* Password meter styles */
+.password-information{padding:0px;margin:0px;height:20px;}
+.password-meter{position:relative;top:10px;left:0px;width:80%;height:10px;border:1px solid silver;background-color:#EEEEEE;border-radius:3px;}
+.password-progress{width:0px;height:100%;background-color:red;}
+.password-strength{position:absolute;bottom:17px;right:7px;width:20%;color:gray;height:15px;font-size:14px;text-align:center;}
+
+.confirm-image{display:none;}

@@ -1,0 +1,88 @@
+﻿@model SecurityViewModel
+
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+@{ 
+    var state = Model.TwoFactorEnabled == true ? "on" : "off";
+}
+
+<link rel="stylesheet" href="~/css/manage-profile.css" />
+<script type="text/javascript" src="~/js/manage-profile.js"></script>
+
+<div class="security-page">
+    <form method="post">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Two Factor Authentication</h3>
+                <div class="card-subtitle">Secure your account by receiving security codes via email or text</div>
+            </div>
+            <div class="card-body padding-top-xs-0">
+                <div class="row padding-top-xs-15 min-height-100">
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div>Two factor authenticaiton allows for you to receive one time passcodes when logging in.  This extra step can prevent someone from gaining access to your account if they guess your password.</div>
+                                <p></p>
+                                <div class="twofa-diagram" style="background-image:url('/Images/twofa-diagram.png');width:260px;height:80px;background-size:260px 80px"></div>
+                                <p></p>
+                                <div>Heres how it works...</div>
+                                <div>
+                                    <p></p>
+                                    <div>1 - Login using your username and password</div>
+                                    <div>2 - We'll send a code via email or text message</div>
+                                    <div>3 - Enter the code into the verification form</div>
+                                    <div>4 - If everything checks out, you'll be logged in</div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 padding-top-xs-15">
+                                @if (Model.TwoFactorEnabled == false)
+                                {
+                                    <div style="color:green;padding-bottom:15px;">Click below to enable two factor authentication on your account</div>
+                                    <button asp-action="EnableTwoFactorAuthentication" class="twofa-enable-button btn col-sm-12 col-md-3 col-xl-2">Enable 2FA</button>
+                                }
+                                else
+                                {
+                                    <div style="color:red;padding-bottom:15px;">Click below to disable two factor authentication on your account</div>
+                                    <button asp-action="DisableTwoFactorAuthentication" class="twofa-disable-button btn col-sm-12 col-md-3 col-xl-2">Disable 2FA</button>
+
+                                    @if (Model.EmailConfirmed == false)
+                                    {
+                                        <div class="padding-top-xs-15 margin-bottom-md-15" style="color:silver;">* Two factor authentication via email will be unavailable until your email address is verified</div>
+                                    }
+
+                                    @if (Model.PhoneConfirmed == false)
+                                    {
+                                        <div class="padding-top-xs-15 margin-bottom-md-15" style="color:silver;">* Two factor authentication via phone will be unavailable until your phone number is verified</div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card margin-top-xs-20 margin-top-md-50">
+            <div class="card-header">
+                <h3 class="card-title">Password Maintenance</h3>
+                <div class="card-subtitle">We recommend that you change your password periodically.</div>
+            </div>
+            <div class="card-body padding-top-xs-0">
+                <a class="row hover-light padding-top-xs-15 min-height-100" href="/Manage/Password">
+                    <div class="col-10">
+                        <div class="row">
+                            <div class="form-group col-md-10 padding-top-xs-15">
+                                <div class="text-danger">If your password is more than 6 months old, we recommend that you change it now.</div>
+                                <div>Click here to update your password</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-2 padding-top-xs-5 padding-top-md-30">
+                        <i class="fa fa-chevron-right float-right"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>

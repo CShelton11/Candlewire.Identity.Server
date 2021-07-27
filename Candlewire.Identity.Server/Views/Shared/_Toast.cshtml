@@ -1,0 +1,9 @@
+﻿@model BaseViewModel;
+
+<div class="toast" tabindex="-1">
+    <div class="toast-dialog">
+        <div class="toast-title">@(Model != null ? Model.ToastTitle : "")</div>
+        <div class="toast-body">@(Model != null ? Html.Raw(String.Join("<br>", Model.ToastMessages)) : Html.Raw(""))</div>
+        <div class="toast-level">@(Model != null ? Model.ToastLevel : "")</div>
+    </div>
+</div>

@@ -1,0 +1,71 @@
+﻿@model Candlewire.Identity.Server.Models.ManageViewModels.VerifyViewModel
+
+@{ 
+    ViewData["Title"] = "SendVerificationEmail";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="verify-page row">
+    <div class="col-sm-8 col-md-8 offset-md-2">
+        <partial name="_ValidationSummary" />
+
+        <div class="card">
+            <div class="card-header">
+                @if (Model.VerificationType.ToLower() == "email")
+                {
+                    <h3 class="card-title">Verify Email Address</h3>
+                    <div class="card-subtitle">Just need to make sure that this is your email address..</div>
+                }
+                else
+                {
+                    <h3 class="card-title">Verify Phone Number</h3>
+                    <div class="card-subtitle">Just need to make sure that this is your phone number...</div>
+                }
+            </div>
+            <div class="card-body">
+                <form asp-action="Verify" method="post">
+                    <input type="text" class="hidden-field" asp-for="VerificationEmail" />
+                    <input type="text" class="hidden-field" asp-for="VerificationPhone" />
+                    <input type="text" class="hidden-field" asp-for="VerificationType" />
+
+                    @if (@Model.VerificationType.ToLower() == "email")
+                    {
+                        <div class="row">
+                            <div class="col-md-12"><b>We've sent an email to @Model.VerificationEmail with a verification code.</b></div>
+                            <div class="col-md-12">Please enter the code from the email below.</div>
+                            <div class="col-md-12 text-danger">This code will expire in 2 minutes.</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row">
+                            <div class="col-md-12"><b>We've sent a text message to @Model.VerificationPhone with a verification code.</b></div>
+                            <div class="col-md-12">Please enter the code from the text message below.</div>
+                            <div class="col-md-12 text-danger">This code will expire in 2 minutes.</div>
+                        </div>
+                    }
+
+                    <p></p>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label asp-for="VerificationCode"></label>
+                                <input type="text" asp-for="VerificationCode" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary col-sm-12 col-md-6 col-xl-4">Verify @Model.VerificationType</button>
+                                <a asp-action="Profile" class="btn btn-secondary col-sm-12 col-md-6 col-xl-4">Profile Settings</a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

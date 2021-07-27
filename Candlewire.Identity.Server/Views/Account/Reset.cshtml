@@ -1,0 +1,94 @@
+﻿@model ResetViewModel
+@{ ViewData["Title"] = "Reset password"; }
+
+<link rel="stylesheet" href="~/css/account-reset.css" />
+<script type="text/javascript" src="~/js/account-reset.js"></script>
+
+@if (Model.Completed == false)
+{
+    <div class="row">
+        <div class="col-xs-12 col-md-8 offset-md-2">
+            <partial name="_ValidationSummary" />
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Reset Password</h3>
+                    <div class="card-subtitle">Let's get your new password setup</div>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Account" asp-action="Reset" method="post" class="form-horizontal">
+                        <input asp-for="Code" type="hidden" />
+                        <div class="row">
+                            <div class="form-group col-xs-12 col-md-12">
+                                <label asp-for="Email"></label>
+                                <input asp-for="Email" class="form-control col-xs-12 col-md-8" />
+                                <span asp-validation-for="Email" class="hidden"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Password" class="password-label"></label>
+                                    <div class="input-group password-toggle">
+                                        <input asp-for="Password" class="form-control password-field" />
+                                        <div class="input-group-addon">
+                                            <a href=""><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    <div class="password-information">
+                                        <div class="password-meter"><div class="password-progress"></div></div>
+                                        <span class="password-strength"></span>
+                                    </div>
+                                    <span asp-validation-for="Password" class="hidden-field"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ConfirmPassword"></label>
+                                    <div class="input-group confirm-input-group">
+                                        <input asp-for="ConfirmPassword" class="form-control confirm-field" />
+                                        <span class="input-group-addon confirm-image" aria-hidden="true" title="Passwords match"><span class="fa fa-check-circle"></span></span>
+                                        <span asp-validation-for="ConfirmPassword" class="hidden-field"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-xs-12 col-md-12">
+                                <button type="submit" class="btn btn-primary col-xs-12 col-md-3 col-xl-3">Reset</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+}
+else
+{
+    <div class="row">
+        <div class="col-xs-12 col-md-6 offset-md-3">
+            <div class="card card-prompt">
+                <div class="card-header">
+                    <h3 class="card-title">Password Reset</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12 col-md-12">
+                            <p>Your password has been reset. Please <a asp-controller="Account" asp-action="Login">Click here to log in</a>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+
+
+
+

@@ -1,0 +1,40 @@
+﻿@model TermsViewModel
+
+@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+
+<div class="profile-page">
+    <div class="row">
+        <div class="col-md-12">
+            <partial name="_ValidationSummary" />
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Terms Of Service</h3>
+                    <div class="card-subtitle">Understanding our terms of service</div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="text" class="hidden-field" asp-for="ReturnUrl" />
+                        <input type="text" class="hidden-field" asp-for="TermsEmail" />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Please read through the terms of service below</label>
+                                    <label>By clicking 'Next', you agree to these terms</label>
+                                    <button type="submit" class="btn btn-primary col-sm-12 col-md-4 col-xl-3">Next</button>
+                                    @Html.ActionLink("Cancel", "Index", "Home", null, new { @class = "terms-cancel-button btn btn-secondary col-sm-12 col-md-3 col-xl-3" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12 col-md-12 col-xl-12">
+                                @Html.Raw(Model.TermsHtml)
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
