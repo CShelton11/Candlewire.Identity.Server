@@ -216,6 +216,22 @@ namespace Candlewire.Identity.Server.Controllers
                     }
                     else
                     {
+                        var result = await ExternalResult();
+                        var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
+                        var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];  // .AuthScheme is for ADFS
+                        var providerKey = userId.Value;
+
+                        var exists = (await _userManager.FindByLoginAsync(providerName, providerKey)) != null;
+                        if (exists == true)
+                        {
+                            throw new Exception("The current external account has already been registered.");
+                        }
+                        else
+                        {
+                            var loginInfo = new UserLoginInfo(providerName, providerKey, providerName);
+                            await _signinManager.UserManager.AddLoginAsync(user, loginInfo);
+                        }
+                    
                         return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl});
                     }
                 }
