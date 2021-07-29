@@ -1,5 +1,5 @@
 # Candlewire.Identity.Server
-Identity Server UI By Candlewire
+Enhanced Identity Server UI
 
 This project was created to provide a little more to identity server in the form of UI enhancements and improved application flow.
 My hope is to continue improving upon the UI with the help of others and to include new features such the following:
