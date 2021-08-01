@@ -1,11 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 
 namespace Candlewire.Identity.Server.Extensions
 {
@@ -13,12 +10,13 @@ namespace Candlewire.Identity.Server.Extensions
     {
         public static IIdentityServerBuilder AddSigningCredentials(this IIdentityServerBuilder builder, IConfigurationSection options)
         {
-            var path = options.GetValue<String>("Path");
+            var path = Directory.GetCurrentDirectory();
+            var file = path + options.GetValue<String>("Path");
             var password = options.GetValue<String>("Password");
 
-            if (File.Exists(path))
+            if (File.Exists(file))
             {
-                builder.AddSigningCredential(new X509Certificate2(path, password));
+                builder.AddSigningCredential(new X509Certificate2(file, password));
             }
             else
             {

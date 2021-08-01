@@ -2,6 +2,4 @@
 .profile-photo-temp { }
 .profile-photo-letter { position:absolute!important;top:15px!important;left:50%!important;margin-left:-55px;text-align:center;width:110px;height:110px;border-radius:55px!important;background-color:#F08080;border:3px solid silver;font-size:65px;float:right;padding:3px;color:white!important; }
 
-.home-panel { border:1px solid #E0E0E0;border-radius:5px;padding:15px;}
-
-
+.home-panel { padding:15px;}

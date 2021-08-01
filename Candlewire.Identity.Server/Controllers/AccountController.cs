@@ -39,12 +39,13 @@ namespace Candlewire.Identity.ServerControllers
     [AllowAnonymous]
     public class AccountController : Controller
     {
-        private readonly IOptions<RoleSettings> _roleSettings;
+        private readonly ProviderSettings _providerSettings;
         private readonly TokenManager _tokenManager;
         private readonly SessionManager _sessionManager;
         private readonly AccountManager _accountManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ClaimManager _claimManager;
         private readonly IIdentityServerInteractionService _interaction;
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
@@ -54,12 +55,13 @@ namespace Candlewire.Identity.ServerControllers
         private readonly ILogger _logger;
 
         public AccountController(
-            IOptions<RoleSettings> roleSettings,
+            IOptions<ProviderSettings> providerSettings,
             TokenManager tokenManager,
             SessionManager sessionManager,
             AccountManager accountManager,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
+            ClaimManager claimManager,
             IIdentityServerInteractionService interaction,
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
@@ -68,12 +70,13 @@ namespace Candlewire.Identity.ServerControllers
             ISmsSender smsSender,
             ILoggerFactory loggerFactory)
         {
-            _roleSettings = roleSettings;
+            _providerSettings = providerSettings.Value;
             _tokenManager = tokenManager;
             _sessionManager = sessionManager;
             _accountManager = accountManager;
             _userManager = userManager;
             _signInManager = signInManager;
+            _claimManager = claimManager;
             _interaction = interaction;
             _clientStore = clientStore;
             _schemeProvider = schemeProvider;
@@ -579,7 +582,7 @@ namespace Candlewire.Identity.ServerControllers
         private async Task<IActionResult> ExternalLoginProcess(AuthenticateResult result, String returnUrl)
         {
             // Validate that the user couold be located from the external result
-            var (user, provider, providerUserId, claims) = await FindUserFromExternalProviderAsync(result);
+            var (user, provider, providerUserId) = await FindUserFromExternalProviderAsync(result);
             if (user == null)
             {
                 throw new ApplicationException("ExternalLoginProcess failure.  User not found");
@@ -624,11 +627,45 @@ namespace Candlewire.Identity.ServerControllers
         {
             var result = await ExternalLoginResult();
             var url = returnUrl != null ? returnUrl : result.Properties.RedirectUri != null ? result.Properties.RedirectUri : null;
-            var (user, provider, providerUserId, claims) = await FindUserFromExternalProviderAsync(result);
+            var (user, provider, providerUserId) = await FindUserFromExternalProviderAsync(result);
             if (user == null)
             {
-                // User not yet created, redirect to signup for account finalization and verification
-                return RedirectToAction("Signup", "Register", new { returnUrl = url });
+                var settings = (ProviderSettings.ProviderSetting)_providerSettings.GetType().GetProperty(provider)?.GetValue(_providerSettings, null);
+                var mode = settings?.RegistrationMode;
+                if (mode?.ToLower() == "bypass")
+                {
+                    var claims = _claimManager.ExtractClaims(result);
+                    var requirements = settings.ProviderClaims.Where(a => a.Required.ToLower() == "true").ToList();
+                    var query = from a in requirements
+                                join b in claims on a.ClaimType.ToLower() equals b.Type.ToLower() into temp
+                                from c in temp.DefaultIfEmpty()
+                                select new { Requirement = a, Claim = c };
+
+                    if (query.Any(a => a.Claim == null))
+                    {
+                        throw new System.Exception("Required claims were missing from the external login provider.");
+                    }
+                    else
+                    {
+                        var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
+                        var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
+                        var providerKey = userId.Value;
+
+                        var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
+                        var firstName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName)?.Value;
+                        var lastName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName)?.Value;
+                        var nickName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName)?.Value;
+                        var birthDate = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate) == null ? null : (DateTime?)Convert.ToDateTime(claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate)?.Value);
+
+                        user = await _accountManager.AutoCreateUserAsync(emailAddress, firstName, lastName, nickName, birthDate, null, providerName, providerKey);
+                        await _accountManager.AutoAssignRolesAsync(user);
+                        return await ExternalLoginProcess(result, url);
+                    }
+                }
+                else
+                {
+                    return RedirectToAction("Signup", "Register", new { returnUrl = url });
+                }
             }
             else
             {
@@ -683,7 +720,7 @@ namespace Candlewire.Identity.ServerControllers
             }
         }
 
-        private async Task<(ApplicationUser user, string provider, string providerUserId, IEnumerable<Claim> claims)> FindUserFromExternalProviderAsync(AuthenticateResult result)
+        private async Task<(ApplicationUser user, string provider, string providerUserId)> FindUserFromExternalProviderAsync(AuthenticateResult result)
         {
             var externalUser = result.Principal;
 
@@ -698,7 +735,7 @@ namespace Candlewire.Identity.ServerControllers
             var user = await _userManager.FindByLoginAsync(provider, providerUserId);
             claims.Remove(userIdClaim);
 
-            return (user, provider, providerUserId, claims);
+            return (user, provider, providerUserId);
         }
 
         private void ProcessLoginCallbackForOidc(AuthenticateResult externalResult, List<Claim> localClaims, AuthenticationProperties localSignInProps)

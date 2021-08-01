@@ -9,7 +9,7 @@
         <div class="col-12">
             <div class="row" style="padding-top:140px;">
                 <div class="profile-photo-temp">
-                    <div class="profile-photo-letter">@Model.FirstName.Substring(0, 1)</div>
+                    <div class="profile-photo-letter">@Model.FirstName?.Substring(0, 1)</div>
                 </div>
                 <div class="col-12">
                     <div style="color:black; text-align:center;height:100px;">
@@ -22,7 +22,7 @@
     </div>
     <div class="row">
         <div class="col-12 col-md-6">
-            <div class="col-12 home-panel margin-top-xs-15" style="">
+            <div class="card col-12 home-panel margin-top-xs-15" style="">
                 <div class="row border-bottom">
                     <div class="home-left col-8">
                         <h5 class="home-title" style="">Personal Info</h5>
@@ -41,7 +41,7 @@
             </div>
         </div>
         <div class="col-12 col-md-6">
-            <div class="col-12 home-panel margin-top-xs-15">
+            <div class="card col-12 home-panel margin-top-xs-15">
                 <div class="row border-bottom">
                     <div class="home-left col-8">
                         <h5 class="home-title">Security Info</h5>
@@ -63,7 +63,7 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="col-12 home-panel margin-top-xs-15">
+            <div class="card col-12 home-panel margin-top-xs-15">
                 <div class="row border-bottom">
                     <div class="home-left col-8">
                         <h5 class="home-title" style="">My Applications</h5>

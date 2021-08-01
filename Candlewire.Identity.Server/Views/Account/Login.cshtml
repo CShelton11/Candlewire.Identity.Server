@@ -59,16 +59,16 @@
                         <form asp-route="Account">
                             <div class="row">
                                 <div class="card-body">
-                                    <ul class="list-inline">
+                                    <div class="row">
                                         @foreach (var provider in Model.ExternalProviders)
                                         {
-                                            <li>
-                                                <a class="btn btn-outline-secondary col-md-6" asp-action="ExternalLogin" asp-route-provider="@provider.AuthenticationScheme" asp-route-returnUrl="@Model.ReturnUrl">
-                                                    <div class="btn-oauth btn-image @("btn-image-icon-"+provider.AuthenticationScheme.ToLower())"><span class="test">Login with @provider.AuthenticationScheme</span></div>
+                                            <div class="col-12 col-md-6" style="padding-left:10px;padding-right:0px;">
+                                                <a class="btn btn-outline-secondary col-md-12" asp-action="ExternalLogin" asp-route-provider="@provider.AuthenticationScheme" asp-route-returnUrl="@Model.ReturnUrl">
+                                                    <div class="btn-oauth btn-image @("btn-image-icon-" + provider.AuthenticationScheme.ToLower())"><span class="test">Login with @provider.AuthenticationScheme</span></div>
                                                 </a>
-                                            </li>
+                                            </div>
                                         }
-                                    </ul>
+                                    </div>
                                 </div>
                             </div>
                         </form>

@@ -38,7 +38,7 @@ namespace Candlewire.Identity.Server
                     .MinimumLevel.Override("System", LogEventLevel.Warning)
                     .MinimumLevel.Override("Microsoft.AspNetCore.Authentication", LogEventLevel.Information)
                     .Enrich.FromLogContext()
-                    .WriteTo.File(@"Logs\\identityserver_log.txt")
+                    .WriteTo.File(@"Logs\\identityserver.log")
                     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}", theme: AnsiConsoleTheme.Literate);
             });
         });

@@ -3,11 +3,13 @@ using Candlewire.Identity.Server.Extensions;
 using Candlewire.Identity.Server.Interfaces;
 using Candlewire.Identity.Server.Managers;
 using Candlewire.Identity.Server.Models.RegisterViewModels;
+using Candlewire.Identity.Server.Settings;
 using IdentityModel;
 using IdentityServer4;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -26,16 +28,20 @@ namespace Candlewire.Identity.Server.Controllers
         private readonly AccountManager _accountManager;
         private readonly SessionManager _sessionManager;
         private readonly TokenManager _tokenManager;
+        private readonly ClaimManager _claimManager;
         private readonly IEmailSender _emailSender;
+        private readonly TermSettings _termSettings;
 
-        public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, IEmailSender emailSender)
+        public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, ClaimManager claimManager, IEmailSender emailSender, IOptions<TermSettings> termSettings)
         {
             _signinManager = signinManager;
             _userManager = userManager;
             _accountManager = accountManager;
             _sessionManager = sessionManager;
             _tokenManager = tokenManager;
+            _claimManager = claimManager;
             _emailSender = emailSender;
+            _termSettings = termSettings.Value;
         }
 
         [HttpGet]
@@ -46,25 +52,18 @@ namespace Candlewire.Identity.Server.Controllers
             if (result != null)
             {
                 var principal = result.Principal;
-                var claims = principal.Claims.ToList();
+                var claims = _claimManager.ExtractClaims(result);
 
-                var name = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Name)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
-                var first = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.GivenName)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.GivenName)?.Value;
-                var last = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.FamilyName)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.Surname)?.Value;
-                var email = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Email)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-                var upn = claims.FirstOrDefault(a => a.Type == ClaimTypes.Upn)?.Value;
-                var array = name.Split(" ");
-
-                if (first == null && array.Length > 1) { first = array[0]; }
-                if (last == null && array.Length > 1) { last = array[1]; }
-                if (email == null && upn != null) { email = upn; }
+                var first = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.GivenName)?.Value;
+                var last = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.FamilyName)?.Value;
+                var email = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Email)?.Value;
 
                 model.FirstName = first;
                 model.LastName = last;
                 model.EmailAddress = email;
                 model.AccountSource = "external";
             }
-            
+
             return View(model);
         }
 
@@ -106,11 +105,11 @@ namespace Candlewire.Identity.Server.Controllers
             var reg = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
             if (reg != null)
             {
+                var path = Directory.GetCurrentDirectory();
+                var file = path + _termSettings.Path;
                 var model = new TermsViewModel();
-                var directory = Directory.GetCurrentDirectory();
-                var path = directory + "\\Documents\\Terms.txt";
                 var terms = "";
-                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
                     using (StreamReader reader = new StreamReader(stream))
                     {
@@ -165,8 +164,8 @@ namespace Candlewire.Identity.Server.Controllers
                 if (reg.TermsAgreement == true)
                 {
                     var code = await _tokenManager.GenerateVerifyEmailTokenAsync();
-                    var subject = "Candlewire Email Verification";
-                    var message = $"Candlewire - Email Verification - Please use the following code to verify this email address: {code}";
+                    var subject = "Email Verification";
+                    var message = $"Email Verification - Please use the following code to verify this email address: {code}";
                     await _emailSender.SendEmailAsync(emailAddress, subject, message);
                     var model = new VerifyViewModel() { VerificationEmail = emailAddress, ReturnUrl = returnUrl };
                     return View(model);
@@ -205,18 +204,25 @@ namespace Candlewire.Identity.Server.Controllers
                 if (verified == true)
                 {
                     var reg = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
-                    var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, Convert.ToDateTime(reg.Birthdate), reg.Password);
-                    await _accountManager.AutoAssignRolesAsync(user);
-                    await _sessionManager.RemoveAsync("Registration");
-
-                    if (reg.AccountSource == "candlewire")
+                    if (reg.AccountSource == "internal")
                     {
-                        await _signinManager.PasswordSignInAsync(user, reg.Password, false, false);
+                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, Convert.ToDateTime(reg.Birthdate), _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.Password);
+                        await _accountManager.AutoAssignRolesAsync(user);
+                        await _sessionManager.RemoveAsync("Registration");
+                        await _signinManager.SignInAsync(user, new AuthenticationProperties { });
                         return RedirectToLocal(model.ReturnUrl);
                     }
                     else
                     {
-                        return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl});
+                        var result = await ExternalResult();
+                        var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
+                        var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
+                        var providerKey = userId.Value;
+
+                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, Convert.ToDateTime(reg.Birthdate), _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
+                        await _accountManager.AutoAssignRolesAsync(user);
+                        await _sessionManager.RemoveAsync("Registration");
+                        return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl });
                     }
                 }
                 else
@@ -289,3 +295,4 @@ namespace Candlewire.Identity.Server.Controllers
         }
     }
 }
+

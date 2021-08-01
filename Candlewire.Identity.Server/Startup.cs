@@ -47,7 +47,9 @@ namespace Candlewire.Identity.Server
             var connectionString = Configuration.GetConnectionString("CandlewireIdentityConnection");
             var smsSettings = Configuration.GetSection("SmsSettings");
             var emailSettings = Configuration.GetSection("EmailSettings");
-            var roleSettings = Configuration.GetSection("RoleSettings");
+            var authSettings = Configuration.GetSection("AuthSettings");
+            var termSettings = Configuration.GetSection("TermSettings");
+            var providerSettings = Configuration.GetSection("ProviderSettings");
 
             // Setup profile data by adding properties to application user
             services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
@@ -111,13 +113,16 @@ namespace Candlewire.Identity.Server
             services.AddSingleton<IConfiguration>(Configuration);
             services.Configure<SmsSettings>(smsSettings);
             services.Configure<EmailSettings>(emailSettings);
-            services.Configure<RoleSettings>(options => roleSettings.Bind(options));
+            services.Configure<TermSettings>(termSettings);
+            services.Configure<AuthSettings>(authSettings);
+            services.Configure<ProviderSettings>(options => providerSettings.Bind(options));
             services.AddTransient<IEmailSender, MessageSender>();
             services.AddTransient<ISmsSender, MessageSender>();
             services.AddTransient<SessionManager>();
             services.AddTransient<StorageManager>();
             services.AddTransient<TokenManager>();
             services.AddTransient<AccountManager>();
+            services.AddTransient<ClaimManager>();
             services.AddDbContext<ProtectionDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<PersistenceDbContext>(options => options.UseNpgsql(connectionString));
         }

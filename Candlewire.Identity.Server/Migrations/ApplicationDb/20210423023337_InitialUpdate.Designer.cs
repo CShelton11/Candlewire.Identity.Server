@@ -3,15 +3,17 @@ using System;
 using Candlewire.Identity.Server.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Candlewire.Identity.Server.Migrations.ApplicationDb
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210423023337_InitialUpdate")]
+    partial class InitialUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,6 +83,109 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers");
+                });
+
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.ApplicationUserLocation", b =>
+                {
+                    b.Property<long>("UserLocationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .UseIdentityByDefaultColumn();
+
+                    b.Property<string>("CityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserLocationId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLocations");
+                });
+
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.ApplicationUserSchool", b =>
+                {
+                    b.Property<long>("UserSchoolId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .UseIdentityByDefaultColumn();
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("SchoolId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserSchoolId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserSchools");
+                });
+
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.LookupResourceCity", b =>
+                {
+                    b.Property<Guid>("CityId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CityName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StateId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("CityId");
+
+                    b.ToTable("LookupResourceCities");
+                });
+
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.LookupResourceSchool", b =>
+                {
+                    b.Property<Guid>("SchoolId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SchoolName")
+                        .HasColumnType("text");
+
+                    b.HasKey("SchoolId");
+
+                    b.ToTable("LookupResourceSchools");
+                });
+
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.LookupResourceState", b =>
+                {
+                    b.Property<Guid>("StateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StateCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StateName")
+                        .HasColumnType("text");
+
+                    b.HasKey("StateId");
+
+                    b.ToTable("LookupResourceStates");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -213,6 +318,24 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
                     b.ToTable("AspNetUserTokens");
                 });
 
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.ApplicationUserLocation", b =>
+                {
+                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationUser", "User")
+                        .WithMany("UserLocations")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.ApplicationUserSchool", b =>
+                {
+                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationUser", "User")
+                        .WithMany("UserSchools")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -262,6 +385,13 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Candlewire.Identity.Server.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("UserLocations");
+
+                    b.Navigation("UserSchools");
                 });
 #pragma warning restore 612, 618
         }
