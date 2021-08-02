@@ -20,6 +20,24 @@ namespace Candlewire.Identity.Server.Settings
             public List<String> AuthorizedDomains { get; set; }
             public List<String> RestrictedDomains { get; set; }
             public List<ProviderClaim> ProviderClaims { get; set; }
+
+            public Boolean HasAuthorizedDomain(String domainName)
+            {
+                if (AuthorizedDomains == null || AuthorizedDomains.Count == 0) { return true; }
+                else
+                {
+                    return AuthorizedDomains.Any(a => a.ToLower() == domainName.ToLower());
+                }
+            }
+
+            public Boolean HasRestrictedDomain(String domainName)
+            {
+                if (RestrictedDomains == null || RestrictedDomains.Count == 0) { return true; }
+                else
+                {
+                    return RestrictedDomains.Any(a => a.ToLower() == domainName.ToLower());
+                }
+            }
         }
 
         public class ProviderClaim

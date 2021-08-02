@@ -87,5 +87,10 @@ namespace Candlewire.Identity.Server.Extensions
 				return false;
 			}
 		}
+
+		public static String GetDomainName(this String email)
+        {
+			return (email).Substring((email).IndexOf("@") + 1);
+		}
 	}
 }

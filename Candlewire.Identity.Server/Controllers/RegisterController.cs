@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -31,8 +32,9 @@ namespace Candlewire.Identity.Server.Controllers
         private readonly ClaimManager _claimManager;
         private readonly IEmailSender _emailSender;
         private readonly TermSettings _termSettings;
+        private readonly ProviderSettings _providerSettings;
 
-        public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, ClaimManager claimManager, IEmailSender emailSender, IOptions<TermSettings> termSettings)
+        public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, ClaimManager claimManager, IEmailSender emailSender, IOptions<TermSettings> termSettings, IOptions<ProviderSettings> providerSettings)
         {
             _signinManager = signinManager;
             _userManager = userManager;
@@ -42,12 +44,13 @@ namespace Candlewire.Identity.Server.Controllers
             _claimManager = claimManager;
             _emailSender = emailSender;
             _termSettings = termSettings.Value;
+            _providerSettings = providerSettings.Value;
         }
 
         [HttpGet]
         public async Task<IActionResult> Signup(String returnUrl)
         {
-            var result = await ExternalResult();
+            var result = await ExternalResultAsync();
             var model = new SignupViewModel() { ReturnUrl = returnUrl, AccountSource = "internal" };
             if (result != null)
             {
@@ -72,19 +75,47 @@ namespace Candlewire.Identity.Server.Controllers
         {
             if (ModelState.IsValid)
             {
-                DateTime year = DateTime.Now;
-                TimeSpan timespan = year - Convert.ToDateTime(model.Birthdate);
-                DateTime age = DateTime.MinValue.AddDays(timespan.Days);
-                Int32 years = age.Year - 1;
-                if (years < 18)
+                var external = (await ExternalResultAsync()).Succeeded;
+                var source = model.AccountSource;
+                if ((external && source == "internal") || (!external && source == "external"))
                 {
-                    ModelState.AddModelError("", "You must be at least 18 years of age to create an account");
+                    ModelState.AddModelError("", "Unauthorized registration flow detected");
                 }
-
-                var exists = _userManager.Users.Count(a => a.Email.ToUpper() == model.EmailAddress.ToUpper()) != 0;
-                if (exists == true)
+                if (model.AccountSource == "internal")
                 {
-                    ModelState.AddModelError("", "This email address is already associated with an account.");
+                    var provider = "forms";
+                    var globalizer = CultureInfo.CurrentCulture.TextInfo;
+                    var settings = (ProviderSettings.ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
+                    var domain = model.EmailAddress.GetDomainName();
+                    var authorized = settings.HasAuthorizedDomain(domain);
+                    var restricted = settings.HasRestrictedDomain(domain);
+
+                    if (authorized == false)
+                    {
+                        ModelState.AddModelError("", "Email addresses can only be provided from authorized domains");
+                    }
+
+                    if (restricted == true)
+                    {
+                        ModelState.AddModelError("", "The provided email violates the restricted domains policy");
+                    }
+                }
+                else
+                {
+                    DateTime year = DateTime.Now;
+                    TimeSpan timespan = year - Convert.ToDateTime(model.Birthdate);
+                    DateTime age = DateTime.MinValue.AddDays(timespan.Days);
+                    Int32 years = age.Year - 1;
+                    if (years < 18)
+                    {
+                        ModelState.AddModelError("", "You must be at least 18 years of age to create an account");
+                    }
+
+                    var exists = _userManager.Users.Count(a => a.Email.ToUpper() == model.EmailAddress.ToUpper()) != 0;
+                    if (exists == true)
+                    {
+                        ModelState.AddModelError("", "This email address is already associated with an account.");
+                    }
                 }
 
                 if (ModelState.ErrorCount == 0)
@@ -213,13 +244,13 @@ namespace Candlewire.Identity.Server.Controllers
                     }
                     else
                     {
-                        var result = await ExternalResult();
+                        var result = await ExternalResultAsync();
                         var claims = _claimManager.ExtractClaims(result);
                         var roles = _claimManager.ExtractRoles(result);
                         var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
                         var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
                         var providerKey = userId.Value;
-                        var domainName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "";
+                        var domainName = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
 
                         var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, Convert.ToDateTime(reg.Birthdate), _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
                         await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
@@ -237,7 +268,7 @@ namespace Candlewire.Identity.Server.Controllers
             }
         }
 
-        private async Task<AuthenticateResult> ExternalResult()
+        private async Task<AuthenticateResult> ExternalResultAsync()
         {
             AuthenticateResult result = null;
             AuthenticateResult resultA = await AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
