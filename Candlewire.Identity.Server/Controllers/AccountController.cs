@@ -32,6 +32,7 @@ using Candlewire.Identity.Server.Managers;
 using Candlewire.Identity.Server.Extensions;
 using Candlewire.Identity.Server.Settings;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 
 namespace Candlewire.Identity.ServerControllers
 {
@@ -630,7 +631,8 @@ namespace Candlewire.Identity.ServerControllers
             var (user, provider, providerUserId) = await FindUserFromExternalProviderAsync(result);
             if (user == null)
             {
-                var settings = (ProviderSettings.ProviderSetting)_providerSettings.GetType().GetProperty(provider)?.GetValue(_providerSettings, null);
+                var info = CultureInfo.CurrentCulture.TextInfo;
+                var settings = (ProviderSettings.ProviderSetting)_providerSettings.GetType().GetProperty(info.ToTitleCase(provider))?.GetValue(_providerSettings, null);
                 var mode = settings?.LoginMode;
                 if (mode?.ToLower() == "external")
                 {

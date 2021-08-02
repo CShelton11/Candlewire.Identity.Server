@@ -31,6 +31,7 @@
     <PackageReference Include="SendGrid" Version="9.22.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
     <PackageReference Include="Serilog.Sinks.PostgreSQL" Version="2.1.0" />
+    <PackageReference Include="System.Globalization" Version="4.3.0" />
     <PackageReference Include="Twilio" Version="5.50.0" />
   </ItemGroup>
 
