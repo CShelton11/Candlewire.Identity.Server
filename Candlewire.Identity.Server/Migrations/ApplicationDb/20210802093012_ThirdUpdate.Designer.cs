@@ -3,15 +3,17 @@ using System;
 using Candlewire.Identity.Server.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Candlewire.Identity.Server.Migrations.ApplicationDb
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210802093012_ThirdUpdate")]
+    partial class ThirdUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,6 +28,9 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
                         .HasColumnType("integer")
                         .UseIdentityByDefaultColumn();
 
+                    b.Property<string>("ApplicationRoleId")
+                        .HasColumnType("text");
+
                     b.Property<int>("ClientId")
                         .HasColumnType("integer");
 
@@ -34,6 +39,8 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
                         .HasColumnType("character varying(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApplicationRoleId");
 
                     b.HasIndex("RoleId");
 
@@ -46,6 +53,9 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .UseIdentityByDefaultColumn();
+
+                    b.Property<string>("ApplicationRoleId")
+                        .HasColumnType("text");
 
                     b.Property<string>("DomainName")
                         .HasColumnType("text");
@@ -61,6 +71,8 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
                         .HasColumnType("character varying(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApplicationRoleId");
 
                     b.HasIndex("RoleId");
 
@@ -276,8 +288,12 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
 
             modelBuilder.Entity("Candlewire.Identity.Server.Entities.ApplicationRoleClient", b =>
                 {
-                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationRole", "Role")
+                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationRole", null)
                         .WithMany("RoleClients")
+                        .HasForeignKey("ApplicationRoleId");
+
+                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationRole", "Role")
+                        .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade);
 
@@ -286,8 +302,12 @@ namespace Candlewire.Identity.Server.Migrations.ApplicationDb
 
             modelBuilder.Entity("Candlewire.Identity.Server.Entities.ApplicationRoleMap", b =>
                 {
-                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationRole", "Role")
+                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationRole", null)
                         .WithMany("RoleMaps")
+                        .HasForeignKey("ApplicationRoleId");
+
+                    b.HasOne("Candlewire.Identity.Server.Entities.ApplicationRole", "Role")
+                        .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade);
 

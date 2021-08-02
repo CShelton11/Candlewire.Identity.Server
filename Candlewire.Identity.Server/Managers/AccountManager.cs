@@ -16,12 +16,14 @@ namespace Candlewire.Identity.Server.Managers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ClaimManager _claimManager;
+        private readonly RoleManager _roleManager;
         private readonly ILogger _logger;
 
-        public AccountManager(UserManager<ApplicationUser> userManager, ClaimManager claimManager, ILoggerFactory loggerFactory)
+        public AccountManager(UserManager<ApplicationUser> userManager, ClaimManager claimManager, RoleManager roleManager, ILoggerFactory loggerFactory)
         {
             _userManager = userManager;
             _claimManager = claimManager;
+            _roleManager = roleManager;
             _logger = loggerFactory.CreateLogger<AccountManager>();
         }
 
@@ -72,23 +74,21 @@ namespace Candlewire.Identity.Server.Managers
             return user;
         }
 
-        public async Task AutoAssignRolesAsync(ApplicationUser user)
+        public async Task AutoAssignRolesAsync(ApplicationUser user, String providerName, String domainName, List<String> domainRoles)
         {
             try
             {
                 var currentRoles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-                //var updatedRoles = _roleSettings.Value.Data.Where(a => a.RoleDefaulted == true).Select(a => a.RoleName).ToList();
+                if (currentRoles.Count > 0)
+                {
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles).ConfigureAwait(false);
+                }
 
-                // Next Steps
-                // Add Db Context For Auto Role Assignment
-                // Inject Db Context Into This Class
-                // Determine If User Should Be Auto-Assigned Roles
-                // Then Run Below Code
-
-
-
-                //await _userManager.RemoveFromRolesAsync(user, currentRoles).ConfigureAwait(false);
-                //await _userManager.AddToRolesAsync(user, updatedRoles).ConfigureAwait(false);
+                var updatedRoles = (await _roleManager.GetRoles(providerName, domainName, domainRoles)).Select(a => a.Name).ToList();
+                if (updatedRoles.Count > 0)
+                {
+                    await _userManager.AddToRolesAsync(user, updatedRoles).ConfigureAwait(false);
+                }
             }
             catch (Exception ex)
             {

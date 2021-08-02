@@ -52,10 +52,10 @@ namespace Candlewire.Identity.Server
             var providerSettings = Configuration.GetSection("ProviderSettings");
 
             // Setup profile data by adding properties to application user
-            services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+            services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
             // Setup db context for use in application
-            services.AddEntityFrameworkNpgsql().AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+            services.AddEntityFrameworkNpgsql();
 
             // Setup application to use mvc
             services.AddMvc(option => option.EnableEndpointRouting = false).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
@@ -123,6 +123,8 @@ namespace Candlewire.Identity.Server
             services.AddTransient<TokenManager>();
             services.AddTransient<AccountManager>();
             services.AddTransient<ClaimManager>();
+            services.AddTransient<RoleManager>();
+            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<ProtectionDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<PersistenceDbContext>(options => options.UseNpgsql(connectionString));
         }

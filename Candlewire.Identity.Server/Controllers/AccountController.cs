@@ -650,6 +650,8 @@ namespace Candlewire.Identity.ServerControllers
                         var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
                         var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
                         var providerKey = userId.Value;
+                        var domainName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "";
+                        var domainRoles = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Role)?.Value ?? "").Split(",").ToList();
 
                         var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
                         var firstName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName)?.Value;
@@ -658,7 +660,7 @@ namespace Candlewire.Identity.ServerControllers
                         var birthDate = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate) == null ? null : (DateTime?)Convert.ToDateTime(claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate)?.Value);
 
                         user = await _accountManager.AutoCreateUserAsync(emailAddress, firstName, lastName, nickName, birthDate, null, providerName, providerKey);
-                        await _accountManager.AutoAssignRolesAsync(user);
+                        await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, domainRoles);
                         return await ExternalLoginProcess(result, url);
                     }
                 }

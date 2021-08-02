@@ -18,7 +18,7 @@ namespace Candlewire.Identity.Server.Managers
         {
             var services = new ServiceCollection();
             services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
-            services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+            services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
             services.AddLogging();
 
             using (var serviceProvider = services.BuildServiceProvider())
