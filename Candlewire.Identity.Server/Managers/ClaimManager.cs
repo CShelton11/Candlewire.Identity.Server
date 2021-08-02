@@ -1,6 +1,7 @@
 ﻿using Candlewire.Identity.Server.Extensions;
 using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,6 +53,14 @@ namespace Candlewire.Identity.Server.Managers
             if (nickName != null) { basics.Add(new Claim(JwtClaimTypes.NickName, nickName)); }
 
             return basics;
+        }
+
+        public List<String> ExtractRoles(AuthenticateResult result)
+        {
+            var principal = result.Principal;
+            var claims = principal.Claims.ToList();
+            var roleClaims = claims.Where(a => a.Type == JwtClaimTypes.Role)?.ToList() ?? claims.Where(a => a.Type == ClaimTypes.Role)?.ToList();
+            return roleClaims.Select(a => a.Value).ToList();
         }
 
         public List<Claim> BuildClaims(String userName, String emailAddress, String firstName, String lastName, String nickName, DateTime? birthDate, String terms = null)

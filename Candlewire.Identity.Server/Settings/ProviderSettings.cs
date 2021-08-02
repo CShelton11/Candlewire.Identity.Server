@@ -16,8 +16,9 @@ namespace Candlewire.Identity.Server.Settings
 
         public class ProviderSetting
         {
-            public String RegistrationMode { get; set; }
             public String LoginMode { get; set; }
+            public List<String> AuthorizedDomains { get; set; }
+            public List<String> RestrictedDomains { get; set; }
             public List<ProviderClaim> ProviderClaims { get; set; }
         }
 

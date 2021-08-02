@@ -631,10 +631,11 @@ namespace Candlewire.Identity.ServerControllers
             if (user == null)
             {
                 var settings = (ProviderSettings.ProviderSetting)_providerSettings.GetType().GetProperty(provider)?.GetValue(_providerSettings, null);
-                var mode = settings?.RegistrationMode;
-                if (mode?.ToLower() == "bypass")
+                var mode = settings?.LoginMode;
+                if (mode?.ToLower() == "external")
                 {
                     var claims = _claimManager.ExtractClaims(result);
+                    var roles = _claimManager.ExtractRoles(result);
                     var requirements = settings.ProviderClaims.Where(a => a.Required.ToLower() == "true").ToList();
                     var query = from a in requirements
                                 join b in claims on a.ClaimType.ToLower() equals b.Type.ToLower() into temp
@@ -651,7 +652,6 @@ namespace Candlewire.Identity.ServerControllers
                         var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
                         var providerKey = userId.Value;
                         var domainName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "";
-                        var domainRoles = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Role)?.Value ?? "").Split(",").ToList();
 
                         var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
                         var firstName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName)?.Value;
@@ -660,7 +660,7 @@ namespace Candlewire.Identity.ServerControllers
                         var birthDate = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate) == null ? null : (DateTime?)Convert.ToDateTime(claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate)?.Value);
 
                         user = await _accountManager.AutoCreateUserAsync(emailAddress, firstName, lastName, nickName, birthDate, null, providerName, providerKey);
-                        await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, domainRoles);
+                        await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
                         return await ExternalLoginProcess(result, url);
                     }
                 }

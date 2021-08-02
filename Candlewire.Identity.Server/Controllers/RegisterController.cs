@@ -215,14 +215,14 @@ namespace Candlewire.Identity.Server.Controllers
                     {
                         var result = await ExternalResult();
                         var claims = _claimManager.ExtractClaims(result);
+                        var roles = _claimManager.ExtractRoles(result);
                         var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
                         var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
                         var providerKey = userId.Value;
                         var domainName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "";
-                        var domainRoles = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Role)?.Value ?? "").Split(",").ToList();
 
                         var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, Convert.ToDateTime(reg.Birthdate), _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
-                        await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, domainRoles);
+                        await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
                         await _sessionManager.RemoveAsync("Registration");
                         return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl });
                     }
