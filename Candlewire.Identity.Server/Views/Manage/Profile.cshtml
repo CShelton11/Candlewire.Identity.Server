@@ -25,14 +25,14 @@
                             <div style="color:gray">Adding a profile page helps to personalize your account so that we can put a face with the name.</div>
                         </div>
                         <div class="profile-photo-temp">
-                            <a class="waves-effect waves-light profile-photo-letter">@Model.FirstName.Substring(0, 1)</a>
+                            <a class="waves-effect waves-light profile-photo-letter">@((Model.FirstName ?? " ").Substring(0, 1))</a>
                             <a class="profile-photo-camera fa fa-camera-retro"></a>
                         </div>
                     </div>
                     <p></p>
                 </div>
             </div>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Username">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("preferred_username") ? "/Manage/Username" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -41,9 +41,12 @@
                         </div>
                     </div>
                 </div>
-                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                @if (Model.EditableClaims.Contains("preferred_username"))
+                {
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Name">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("given_name") || Model.EditableClaims.Contains("family_name") ? "/Manage/Name" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-12 col-md-5">
@@ -56,16 +59,19 @@
                         </div>
                     </div>
                 </div>
-                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                @if (Model.EditableClaims.Contains("given_name") || Model.EditableClaims.Contains("family_name"))
+                {
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Address?type=shipping_address">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("shipping_address") ? "/Manage/Address?type=shipping_address" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
                             <label>Shipping Address</label>
                             @if (Model.ShippingAddress != null)
                             {
-                                <div class="col-12 form-control" style="background-color:#EEEEEE;height:90px;padding-top:10px;">
+                                <div class="col-12 form-control" style="background-color:#EEEEEE;height:70px;padding-top:10px;">
                                     <div class="row">
                                         <div class="col-12">@Model.ShippingAddress.Street</div>
                                         <div class="col-12">@(Model.ShippingAddress.City + ", " + Model.ShippingAddress.State + " " + Model.ShippingAddress.Zip) </div>
@@ -73,22 +79,25 @@
                                 </div>
                             }
                             else
-                            { 
+                            {
                                 <div class="col-md-12 form-control" style="background-color:#EEEEEE;"></div>
                             }
                         </div>
                     </div>
                 </div>
-                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                @if (Model.EditableClaims.Contains("shipping_address"))
+                {
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Address?type=billing_address">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("billing_address") ? "/Manage/Address?type=billing_address" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
                             <label>Billing Address</label>
                             @if (Model.BillingAddress != null)
                             {
-                                <div class="col-12 form-control" style="background-color:#EEEEEE;height:90px;padding-top:10px;">
+                                <div class="col-12 form-control" style="background-color:#EEEEEE;height:70px;padding-top:10px;">
                                     <div class="row">
                                         <div class="col-12">@Model.BillingAddress.Street</div>
                                         <div class="col-12">@(Model.BillingAddress.City + ", " + Model.BillingAddress.State + " " + Model.BillingAddress.Zip) </div>
@@ -102,9 +111,12 @@
                         </div>
                     </div>
                 </div>
-                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                @if (Model.EditableClaims.Contains("billing_address"))
+                {
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Nickname">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("nickname") ? "/Manage/Nickname" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -113,9 +125,12 @@
                         </div>
                     </div>
                 </div>
-                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                @if (Model.EditableClaims.Contains("nickname"))
+                {
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                }
             </a>
-            <a class="row hover-light padding-top-xs-15 min-height-100" href="/Manage/Birthdate">
+            <a class="row hover-light padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("birthdate") ? "/Manage/Birthdate" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6">
@@ -124,7 +139,10 @@
                         </div>
                     </div>
                 </div>
-                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                @if (Model.EditableClaims.Contains("birthdate"))
+                {
+                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                }
             </a>
         </div>
     </div>
@@ -136,7 +154,7 @@
                 <div class="card-subtitle">Update your email address and phone number</div>
             </div>
             <div class="card-body padding-top-xs-0">
-                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Email">
+                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("email") ? "/Manage/Email" : "javascript:void(0)")">
                     <div class="col-12 col-md-10">
                         <div class="row">
                             <div class="form-group col-md-6">
@@ -162,9 +180,12 @@
                             </div>
                         </div>
                     </div>
-                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                    @if (Model.EditableClaims.Contains("email"))
+                    {
+                        <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                    }
                 </a>
-                <a class="row hover-light padding-top-xs-15 min-height-100" href="/Manage/Phone">
+                <a class="row hover-light padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("phone_number") ? "/Manage/Phone" : "javascript:void(0)")">
                     <div class="col-12 col-md-10">
                         <div class="row">
                             <div class="form-group col-md-5">
@@ -186,7 +207,10 @@
                             </div>
                         </div>
                     </div>
-                    <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                    @if (Model.EditableClaims.Contains("phone_number"))
+                    {
+                        <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+                    }
                 </a>
                 @if ((!Model.PhoneConfirmed && !String.IsNullOrEmpty(Model.PhoneNumber)) || (!Model.EmailConfirmed && !String.IsNullOrEmpty(Model.EmailAddress)))
                 {
@@ -210,6 +234,9 @@
                         </div>
                     </div>
                 }
+            </div>
+            <div class="card-hidden" style="display:none;">
+                <input asp-for="EditableClaims" style="display:none;" />
             </div>
         </div>
     </div>

@@ -48,5 +48,6 @@ namespace Candlewire.Identity.Server.Models.ManageViewModels
 
         public AddressViewModel BillingAddress { get; set; }
         public AddressViewModel ShippingAddress { get; set; }
+        public String EditableClaims { get; set; }
     }
 }

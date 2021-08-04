@@ -1,9 +1,13 @@
-﻿using Candlewire.Identity.Server.Extensions;
+﻿using Candlewire.Identity.Server.Entities;
+using Candlewire.Identity.Server.Extensions;
+using Candlewire.Identity.Server.Settings;
 using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;

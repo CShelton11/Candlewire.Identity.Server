@@ -40,7 +40,7 @@ namespace Candlewire.Identity.ServerControllers
     [AllowAnonymous]
     public class AccountController : Controller
     {
-        private readonly ProviderSettings _providerSettings;
+        private readonly ProviderManager _providerManager;
         private readonly TokenManager _tokenManager;
         private readonly SessionManager _sessionManager;
         private readonly AccountManager _accountManager;
@@ -56,7 +56,7 @@ namespace Candlewire.Identity.ServerControllers
         private readonly ILogger _logger;
 
         public AccountController(
-            IOptions<ProviderSettings> providerSettings,
+            ProviderManager providerManager,
             TokenManager tokenManager,
             SessionManager sessionManager,
             AccountManager accountManager,
@@ -71,7 +71,7 @@ namespace Candlewire.Identity.ServerControllers
             ISmsSender smsSender,
             ILoggerFactory loggerFactory)
         {
-            _providerSettings = providerSettings.Value;
+            _providerManager = providerManager;
             _tokenManager = tokenManager;
             _sessionManager = sessionManager;
             _accountManager = accountManager;
@@ -643,13 +643,12 @@ namespace Candlewire.Identity.ServerControllers
             }
 
             var globalizer = CultureInfo.CurrentCulture.TextInfo;
-            var settings = (ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
-            var mode = settings?.LoginMode;
             var claims = _claimManager.ExtractClaims(result);
             var roles = _claimManager.ExtractRoles(result);
             var domain = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
-            var authorized = settings.HasAuthorizedDomain(domain);
-            var restricted = settings.HasRestrictedDomain(domain);
+            var authorized = _providerManager.HasAuthorizedDomain(provider, domain);
+            var restricted = _providerManager.HasRestrictedDomain(provider, domain);
+            var mode = _providerManager.GetLoginMode(provider);
 
             if (authorized == false)
             {

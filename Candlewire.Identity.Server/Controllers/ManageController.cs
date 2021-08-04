@@ -34,11 +34,11 @@ namespace Candlewire.Identity.ServerControllers
         private readonly TokenManager _tokenManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ProviderManager _providerManager;
         private readonly IEmailSender _emailSender;
         private readonly ISmsSender _smsSender;
         private readonly ILogger _logger;
         private readonly UrlEncoder _urlEncoder;
-        private readonly ProviderSettings _providerSettings;
 
         private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
         private const string RecoveryCodesKey = nameof(RecoveryCodesKey);
@@ -49,23 +49,23 @@ namespace Candlewire.Identity.ServerControllers
             TokenManager tokenManager,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
+            ProviderManager providerManager,
             IEmailSender emailSender,
             ISmsSender smsSender,
             ILogger<ManageController> logger,
-            UrlEncoder urlEncoder,
-            IOptions<ProviderSettings> providerSettings
+            UrlEncoder urlEncoder
         )
         {
             _applicationContext = applicationContext;
             _sessionManager = sessionManager;
             _tokenManager = tokenManager;
             _userManager = userManager;
+            _providerManager = providerManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _smsSender = smsSender;
             _logger = logger;
             _urlEncoder = urlEncoder;
-            _providerSettings = providerSettings.Value;
         }
 
         // ************************************************
@@ -97,6 +97,8 @@ namespace Candlewire.Identity.ServerControllers
 
         private async Task<ProfileViewModel> BuildProfileViewModel()
         {
+            var provider = await GetProvider();
+            var editables = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
@@ -125,7 +127,8 @@ namespace Candlewire.Identity.ServerControllers
                 PhoneNumber = user.PhoneNumber,
                 PhoneConfirmed = user.PhoneNumberConfirmed,
                 BillingAddress = billingAddress == null ? null : JsonConvert.DeserializeObject<AddressViewModel>(billingAddress),
-                ShippingAddress = shippingAddress == null ? null : JsonConvert.DeserializeObject<AddressViewModel>(shippingAddress)
+                ShippingAddress = shippingAddress == null ? null : JsonConvert.DeserializeObject<AddressViewModel>(shippingAddress),
+                EditableClaims = editables
             };
 
             return model;
@@ -200,6 +203,15 @@ namespace Candlewire.Identity.ServerControllers
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
+
+                var provider = await GetProvider();
+                var editable = _providerManager.HasEditableClaim(provider, "given_name") || _providerManager.HasEditableClaim(provider, "family_name");
+                if (!editable)
+                {
+                    ModelState.AddModelError("", "This account is restricted from editing the first and last name");
+                    return View(model);
+                }
+
                 var claims = await _userManager.GetClaimsAsync(user);
 
                 var firstKey = "given_name";
@@ -284,6 +296,16 @@ namespace Candlewire.Identity.ServerControllers
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
+
+                var provider = await GetProvider();
+                var editable = _providerManager.HasEditableClaim(provider, "preferred_username");
+
+                if (!editable)
+                {
+                    ModelState.AddModelError("", "This account is restricted from editing the username");
+                    return View(model);
+                }
+
                 var claims = await _userManager.GetClaimsAsync(user);
 
                 var userKey = "preferred_username";
@@ -355,6 +377,16 @@ namespace Candlewire.Identity.ServerControllers
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
+
+                var provider = await GetProvider();
+                var editable = _providerManager.HasEditableClaim(provider, "nickname");
+
+                if (!editable)
+                {
+                    ModelState.AddModelError("", "This account is restricted from editing the nickname");
+                    return View(model);
+                }
+
                 var claims = await _userManager.GetClaimsAsync(user);
 
                 var nickKey = "nickname";
@@ -419,6 +451,16 @@ namespace Candlewire.Identity.ServerControllers
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
+
+                var provider = await GetProvider();
+                var editable = _providerManager.HasEditableClaim(provider, "birthdate");
+
+                if (!editable)
+                {
+                    ModelState.AddModelError("", "This account is restricted from editing the date of birth");
+                    return View(model);
+                }
+
                 var claims = await _userManager.GetClaimsAsync(user);
 
                 var birthKey = "birthdate";
@@ -488,6 +530,16 @@ namespace Candlewire.Identity.ServerControllers
             if (ModelState.IsValid)
             {
                 var user = await _userManager.GetUserAsync(User);
+
+                var provider = await GetProvider();
+                var editable = _providerManager.HasEditableClaim(provider, model.Type);
+
+                if (!editable)
+                {
+                    ModelState.AddModelError("", "This account is restricted from editing this type of address");
+                    return View(model);
+                }
+
                 var claims = await _userManager.GetClaimsAsync(user);
                 var address = claims.FirstOrDefault(a => a.Type.ToLower().Equals(model.Type));
 
@@ -563,41 +615,28 @@ namespace Candlewire.Identity.ServerControllers
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
-                var claims = await _userManager.GetClaimsAsync(user);
 
+                var provider = await GetProvider();
+                var editable = _providerManager.HasEditableClaim(provider, "email");
+                var authorized = _providerManager.HasAuthorizedDomain(provider, model.EmailAddress.GetDomainName());
+                var restricted = _providerManager.HasRestrictedDomain(provider, model.EmailAddress.GetDomainName());
 
-                var authorized = false;
-                var restricted = false;
-                var globalizer = CultureInfo.CurrentCulture.TextInfo;
-                var logins = await _userManager.GetLoginsAsync(user);
-                if (logins.Count() > 0)
+                if (editable == false)
                 {
-                    var provider = logins.First().LoginProvider;
-                    var settings = (ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
+                    ModelState.AddModelError("", "This account is restricted from editing the email address");
+                    return View("Email", model);
+                }
 
-                    if (settings.LoginMode == "external")
-                    {
-                        ModelState.AddModelError("", "Your account is restricted from editing the email address");
-                        return View("Email", model);
-                    }
-                    else
-                    {
-                        var domain = model.EmailAddress.GetDomainName();
-                        authorized = settings.HasAuthorizedDomain(domain);
-                        restricted = settings.HasRestrictedDomain(domain);
+                if (authorized == false)
+                {
+                    ModelState.AddModelError("", "The provided email address violated the authorized domains policy");
+                    return View("Email", model);
+                }
 
-                        if (authorized == false)
-                        {
-                            ModelState.AddModelError("", "The provided email address violated the authorized domains policy");
-                            return View("Email", model);
-                        }
-
-                        if (restricted == true)
-                        {
-                            ModelState.AddModelError("", "The provided email address violates the restricted domains policy");
-                            return View("Email", model);
-                        }
-                    }
+                if (restricted == true)
+                {
+                    ModelState.AddModelError("", "The provided email address violates the restricted domains policy");
+                    return View("Email", model);
                 }
 
                 var emailMessages = new List<String>();
@@ -674,7 +713,6 @@ namespace Candlewire.Identity.ServerControllers
             }
 
             var emailAddress = user.Email;
-
             var model = new EmailViewModel
             {
                 EmailAddress = Convert.ToString(emailAddress)
@@ -703,6 +741,16 @@ namespace Candlewire.Identity.ServerControllers
 
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
+
+                var provider = await GetProvider();
+                var editable = _providerManager.HasEditableClaim(provider, "phone_number");
+
+                if (!editable)
+                {
+                    ModelState.AddModelError("", "This account is restricted from editing the phone number");
+                    return View(model);
+                }
+
                 var claims = await _userManager.GetClaimsAsync(user);
 
                 var phoneMessages = new List<String>();
@@ -785,11 +833,9 @@ namespace Candlewire.Identity.ServerControllers
             return model;
         }
 
-
         // ************************************************
         // Two factor authentication actions
         // ************************************************
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> EnableTwoFactorAuthentication()
@@ -987,5 +1033,22 @@ namespace Candlewire.Identity.ServerControllers
                 return View("Password", model);
             }
         }
+
+        // ************************************************
+        // Helper methods
+        // ************************************************
+        public async Task<String> GetProvider()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
+            var claims = await _userManager.GetClaimsAsync(user);
+            var logins = await _userManager.GetLoginsAsync(user);
+            var provider = logins == null || logins.Count == 0 ? "Forms" : logins.First().LoginProvider;
+            return provider;
+        }
+
+
+
+
     }
 }

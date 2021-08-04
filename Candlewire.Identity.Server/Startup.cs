@@ -122,6 +122,7 @@ namespace Candlewire.Identity.Server
             services.AddTransient<AccountManager>();
             services.AddTransient<ClaimManager>();
             services.AddTransient<RoleManager>();
+            services.AddTransient<ProviderManager>();
             services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<ProtectionDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<PersistenceDbContext>(options => options.UseNpgsql(connectionString));

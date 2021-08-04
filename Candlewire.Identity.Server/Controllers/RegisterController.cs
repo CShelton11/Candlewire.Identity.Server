@@ -30,11 +30,12 @@ namespace Candlewire.Identity.Server.Controllers
         private readonly SessionManager _sessionManager;
         private readonly TokenManager _tokenManager;
         private readonly ClaimManager _claimManager;
+        private readonly ProviderManager _providerManager;
         private readonly IEmailSender _emailSender;
         private readonly TermSettings _termSettings;
-        private readonly ProviderSettings _providerSettings;
 
-        public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, ClaimManager claimManager, IEmailSender emailSender, IOptions<TermSettings> termSettings, IOptions<ProviderSettings> providerSettings)
+
+        public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, ClaimManager claimManager, IEmailSender emailSender, IOptions<TermSettings> termSettings, ProviderManager providerManager)
         {
             _signinManager = signinManager;
             _userManager = userManager;
@@ -44,7 +45,7 @@ namespace Candlewire.Identity.Server.Controllers
             _claimManager = claimManager;
             _emailSender = emailSender;
             _termSettings = termSettings.Value;
-            _providerSettings = providerSettings.Value;
+            _providerManager = providerManager;
         }
 
         [HttpGet]
@@ -91,18 +92,15 @@ namespace Candlewire.Identity.Server.Controllers
                 if (external == true)
                 {
                     var (provider, providerKey) = ExternalProviderAsync(result);
-                    var globalizer = CultureInfo.CurrentCulture.TextInfo;
-                    var settings = (ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
                     var domain = model.EmailAddress.GetDomainName();
-                    authorized = settings.HasAuthorizedDomain(domain);
-                    restricted = settings.HasRestrictedDomain(domain);
+                    authorized = _providerManager.HasAuthorizedDomain(provider, domain);
+                    restricted = _providerManager.HasRestrictedDomain(provider, domain);
                 }
                 else
                 {
-                    var settings = _providerSettings.Forms;
                     var domain = model.EmailAddress.GetDomainName();
-                    authorized = settings.HasAuthorizedDomain(domain);
-                    restricted = settings.HasRestrictedDomain(domain);
+                    authorized = _providerManager.HasAuthorizedDomain("Forms", domain);
+                    restricted = _providerManager.HasRestrictedDomain("Forms", domain);
                 }
 
                 if (authorized == false)

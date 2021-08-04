@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,6 +25,7 @@ namespace Candlewire.Identity.Server.Settings
         public String LoginMode { get; set; }
         public List<String> AuthorizedDomains { get; set; }
         public List<String> RestrictedDomains { get; set; }
+        public List<String> EditableClaims { get; set; }
 
         public Boolean HasAuthorizedDomain(String domainName)
         {
