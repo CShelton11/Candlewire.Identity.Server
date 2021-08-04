@@ -25,5 +25,6 @@ namespace Candlewire.Identity.Server.Settings
         public List<String> RestrictedDomains { get; set; }
         public List<String> EditableClaims { get; set; }
         public List<String> VisibleClaims { get; set; }
+        public List<String> RequireClaims { get; set; }
     }
 }

@@ -99,6 +99,7 @@ namespace Candlewire.Identity.ServerControllers
         {
             var provider = await GetProvider();
             var editables = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var visibles = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
@@ -128,7 +129,8 @@ namespace Candlewire.Identity.ServerControllers
                 PhoneConfirmed = user.PhoneNumberConfirmed,
                 BillingAddress = billingAddress == null ? null : JsonConvert.DeserializeObject<AddressViewModel>(billingAddress),
                 ShippingAddress = shippingAddress == null ? null : JsonConvert.DeserializeObject<AddressViewModel>(shippingAddress),
-                EditableClaims = editables
+                EditableClaims = editables,
+                VisibleClaims = visibles
             };
 
             return model;
@@ -206,23 +208,30 @@ namespace Candlewire.Identity.ServerControllers
 
                 var provider = await GetProvider();
                 var editable = _providerManager.HasEditableClaim(provider, "given_name") || _providerManager.HasEditableClaim(provider, "family_name");
+                var required = _providerManager.HasRequiredClaim(provider, "given_name") || _providerManager.HasRequiredClaim(provider, "family_name");
+                var claims = await _userManager.GetClaimsAsync(user);
+
                 if (!editable)
                 {
                     ModelState.AddModelError("", "This account is restricted from editing the first and last name");
                     return View(model);
                 }
 
-                var claims = await _userManager.GetClaimsAsync(user);
-
                 var firstKey = "given_name";
-                var firstName = model.FirstName;
+                var firstName = (model.FirstName ?? "").Trim();
                 var firstClaim = claims.FirstOrDefault(a => a.Type.ToLower().Equals(firstKey));
                 var firstAction = String.IsNullOrEmpty(firstName) && firstClaim != null ? "remove" : firstClaim == null ? "add" : firstName == firstClaim.Value ? "none" : "replace";
 
                 var lastKey = "family_name";
-                var lastName = model.LastName;
+                var lastName = (model.LastName ?? "").Trim();
                 var lastClaim = claims.FirstOrDefault(a => a.Type.ToLower().Equals(lastKey));
                 var lastAction = String.IsNullOrEmpty(lastName) && lastClaim != null ? "remove" : lastClaim == null ? "add" : lastName == lastClaim.Value ? "none" : "replace";
+
+                if (required && (String.IsNullOrEmpty(firstName) || String.IsNullOrEmpty(lastName)))
+                {
+                    ModelState.AddModelError("", "First and last name are required fields");
+                    return View(model);
+                }
 
                 var fullKey = "name";
                 var fullName = String.IsNullOrEmpty(model.FirstName) || String.IsNullOrEmpty(model.LastName) ? "" : model.FirstName + " " + model.LastName;
@@ -299,6 +308,8 @@ namespace Candlewire.Identity.ServerControllers
 
                 var provider = await GetProvider();
                 var editable = _providerManager.HasEditableClaim(provider, "preferred_username");
+                var required = _providerManager.HasRequiredClaim(provider, "preferred_username");
+                var claims = await _userManager.GetClaimsAsync(user);
 
                 if (!editable)
                 {
@@ -306,12 +317,16 @@ namespace Candlewire.Identity.ServerControllers
                     return View(model);
                 }
 
-                var claims = await _userManager.GetClaimsAsync(user);
-
                 var userKey = "preferred_username";
-                var userName = model.Username;
+                var userName = (model.Username ?? "").Trim();
                 var userClaim = claims.FirstOrDefault(a => a.Type.ToLower().Equals(userKey));
                 var userAction = String.IsNullOrEmpty(userName) && userClaim != null ? "remove" : (userClaim == null ? "add" : userName == userClaim.Value ? "none" : "replace");
+
+                if (required && String.IsNullOrEmpty(userName))
+                {
+                    ModelState.AddModelError("", "Username is a required field");
+                    return View(model);
+                }
 
                 var exists = _applicationContext.UserClaims.Where(a => a.ClaimValue == model.Username && a.UserId != user.Id).Count();
                 if (exists > 0)
@@ -380,6 +395,7 @@ namespace Candlewire.Identity.ServerControllers
 
                 var provider = await GetProvider();
                 var editable = _providerManager.HasEditableClaim(provider, "nickname");
+                var required = _providerManager.HasRequiredClaim(provider, "nickname");
 
                 if (!editable)
                 {
@@ -393,6 +409,12 @@ namespace Candlewire.Identity.ServerControllers
                 var nickName = model.Nickname;
                 var nickClaim = claims.FirstOrDefault(a => a.Type.ToLower().Equals(nickKey));
                 var nickAction = String.IsNullOrEmpty(nickName) && nickClaim != null ? "remove" : (nickClaim == null ? "add" : nickName == nickClaim.Value ? "none" : "replace");
+
+                if (required && String.IsNullOrEmpty(nickName))
+                {
+                    ModelState.AddModelError("", "Nickname is a required field");
+                    return View(model);
+                }
 
                 if (nickAction == "add") { await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(nickKey, nickName)); }
                 else if (nickAction == "replace") { await _userManager.ReplaceClaimAsync(user, nickClaim, new System.Security.Claims.Claim(nickKey, nickName)); }
@@ -454,6 +476,7 @@ namespace Candlewire.Identity.ServerControllers
 
                 var provider = await GetProvider();
                 var editable = _providerManager.HasEditableClaim(provider, "birthdate");
+                var required = _providerManager.HasRequiredClaim(provider, "birthdate");
 
                 if (!editable)
                 {
@@ -468,6 +491,12 @@ namespace Candlewire.Identity.ServerControllers
                 var birthClaim = claims.FirstOrDefault(a => a.Type.ToLower().Equals(birthKey));
                 var birthValue = birthClaim == null ? null : (DateTime?)Convert.ToDateTime(birthClaim.Value);
                 var birthAction = birthDate == null && birthClaim != null ? "remove" : (birthClaim == null ? "add" : birthDate == birthValue ? "none" : "replace");
+
+                if (required && birthDate == null)
+                {
+                    ModelState.AddModelError("", "Date of birth is a required field");
+                    return View(model);
+                }
 
                 if (birthAction == "add") { await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(birthKey, birthDate.ToString())); }
                 else if (birthAction == "replace") { await _userManager.ReplaceClaimAsync(user, birthClaim, new System.Security.Claims.Claim(birthKey, birthDate.ToString())); }
@@ -618,9 +647,10 @@ namespace Candlewire.Identity.ServerControllers
 
                 var provider = await GetProvider();
                 var editable = _providerManager.HasEditableClaim(provider, "email");
+                var required = _providerManager.HasRequiredClaim(provider, "email");
                 var authorized = _providerManager.HasAuthorizedDomain(provider, model.EmailAddress.GetDomainName());
                 var restricted = _providerManager.HasRestrictedDomain(provider, model.EmailAddress.GetDomainName());
-
+                
                 if (editable == false)
                 {
                     ModelState.AddModelError("", "This account is restricted from editing the email address");
@@ -640,8 +670,15 @@ namespace Candlewire.Identity.ServerControllers
                 }
 
                 var emailMessages = new List<String>();
-                var emailAddress = model.EmailAddress;
+                var emailAddress = (model.EmailAddress ?? "").Trim();
                 var emailAction = "none";
+
+                if (required && String.IsNullOrEmpty(emailAddress))
+                {
+                    ModelState.AddModelError("", "Email address is a required field");
+                    return View("Email", model);
+                }
+
                 if (String.IsNullOrEmpty(emailAddress) && !String.IsNullOrEmpty(user.Email))
                 {
                     emailAction = "remove";
@@ -1046,9 +1083,5 @@ namespace Candlewire.Identity.ServerControllers
             var provider = logins == null || logins.Count == 0 ? "Forms" : logins.First().LoginProvider;
             return provider;
         }
-
-
-
-
     }
 }

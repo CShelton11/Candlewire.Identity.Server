@@ -11,7 +11,7 @@
             <h3 class="card-title">Basic Info</h3>
             <div class="card-subtitle">Update information such as first name, last name, and birthdate</div>
         </div>
-        <div class="card-body padding-top-xs-0">
+        <div class="card-body padding-top-xs-0 padding-bottom-xs-0">
             <div class="row border-bottom padding-top-xs-15">
                 <div class="col-12">
                     <div class="row">
@@ -32,7 +32,7 @@
                     <p></p>
                 </div>
             </div>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("preferred_username") ? "/Manage/Username" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("preferred_username") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("preferred_username") ? "/Manage/Username" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -46,7 +46,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("given_name") || Model.EditableClaims.Contains("family_name") ? "/Manage/Name" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("given_name") || Model.VisibleClaims.Contains("family_name") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("given_name") || Model.EditableClaims.Contains("family_name") ? "/Manage/Name" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-12 col-md-5">
@@ -64,7 +64,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("shipping_address") ? "/Manage/Address?type=shipping_address" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("shipping_address") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("shipping_address") ? "/Manage/Address?type=shipping_address" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -90,7 +90,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("billing_address") ? "/Manage/Address?type=billing_address" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("billing_address") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("billing_address") ? "/Manage/Address?type=billing_address" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -116,7 +116,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("nickname") ? "/Manage/Nickname" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("nickname") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("nickname") ? "/Manage/Nickname" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -130,7 +130,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("birthdate") ? "/Manage/Birthdate" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("birthdate") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("birthdate") ? "/Manage/Birthdate" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6">
@@ -153,8 +153,8 @@
                 <h3 class="card-title">Contact Info</h3>
                 <div class="card-subtitle">Update your email address and phone number</div>
             </div>
-            <div class="card-body padding-top-xs-0">
-                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("email") ? "/Manage/Email" : "javascript:void(0)")">
+            <div class="card-body padding-top-xs-0 padding-bottom-xs-0">
+                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("email") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("email") ? "/Manage/Email" : "javascript:void(0)")">
                     <div class="col-12 col-md-10">
                         <div class="row">
                             <div class="form-group col-md-6">
@@ -185,7 +185,7 @@
                         <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                     }
                 </a>
-                <a class="row hover-light padding-top-xs-15 min-height-100" href="@(Model.EditableClaims.Contains("phone_number") ? "/Manage/Phone" : "javascript:void(0)")">
+                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(Model.VisibleClaims.Contains("phone_number") ? "" : "display:none")" href="@(Model.EditableClaims.Contains("phone_number") ? "/Manage/Phone" : "javascript:void(0)")">
                     <div class="col-12 col-md-10">
                         <div class="row">
                             <div class="form-group col-md-5">
@@ -237,6 +237,7 @@
             </div>
             <div class="card-hidden" style="display:none;">
                 <input asp-for="EditableClaims" style="display:none;" />
+                <input asp-for="VisibleClaims" style="display:none;" />
             </div>
         </div>
     </div>

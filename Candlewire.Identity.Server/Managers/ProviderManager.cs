@@ -19,6 +19,13 @@ namespace Candlewire.Identity.Server.Managers
             _providerSettings = providerSettings.Value;
         }
 
+        public List<String> GetVisibleClaims(String provider)
+        {
+            var globalizer = CultureInfo.CurrentCulture.TextInfo;
+            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(this._providerSettings, null);
+            return settings?.VisibleClaims ?? new List<String>();
+        }
+
         public List<String> GetEditableClaims(String provider)
         {
             var globalizer = CultureInfo.CurrentCulture.TextInfo;
@@ -61,6 +68,30 @@ namespace Candlewire.Identity.Server.Managers
             var globalizer = CultureInfo.CurrentCulture.TextInfo;
             var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(this._providerSettings, null);
             var items = settings?.EditableClaims;
+            var claims = items != null ? String.Join(",", items) : "";
+
+            if (claims == null || claims == "")
+            {
+                return false;
+            }
+            else
+            {
+                if (claims.ToLower().Contains(claimType.ToLower()))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        public Boolean HasRequiredClaim(String provider, String claimType)
+        {
+            var globalizer = CultureInfo.CurrentCulture.TextInfo;
+            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(this._providerSettings, null);
+            var items = settings?.RequireClaims;
             var claims = items != null ? String.Join(",", items) : "";
 
             if (claims == null || claims == "")

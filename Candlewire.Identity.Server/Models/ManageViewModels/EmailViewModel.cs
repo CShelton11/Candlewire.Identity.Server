@@ -9,7 +9,6 @@ namespace Candlewire.Identity.Server.Models.ManageViewModels
 {
     public class EmailViewModel: BaseViewModel
     {
-        [Required]
         [EmailAddress]
         [Display(Name = "Email Address")]
         public String EmailAddress { get; set; }

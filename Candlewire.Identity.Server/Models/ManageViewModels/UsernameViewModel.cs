@@ -9,7 +9,6 @@ namespace Candlewire.Identity.Server.Models.ManageViewModels
 {
     public class UsernameViewModel: BaseViewModel
     {
-        [Required]
         [Display(Name = "Username")]
         public String Username { get; set; }
     }
