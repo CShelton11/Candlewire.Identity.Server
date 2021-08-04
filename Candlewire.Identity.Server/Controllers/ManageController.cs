@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -12,11 +14,13 @@ using Candlewire.Identity.Server.Extensions;
 using Candlewire.Identity.Server.Interfaces;
 using Candlewire.Identity.Server.Managers;
 using Candlewire.Identity.Server.Models.ManageViewModels;
+using Candlewire.Identity.Server.Settings;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace Candlewire.Identity.ServerControllers
@@ -34,6 +38,7 @@ namespace Candlewire.Identity.ServerControllers
         private readonly ISmsSender _smsSender;
         private readonly ILogger _logger;
         private readonly UrlEncoder _urlEncoder;
+        private readonly ProviderSettings _providerSettings;
 
         private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
         private const string RecoveryCodesKey = nameof(RecoveryCodesKey);
@@ -47,7 +52,9 @@ namespace Candlewire.Identity.ServerControllers
             IEmailSender emailSender,
             ISmsSender smsSender,
             ILogger<ManageController> logger,
-            UrlEncoder urlEncoder)
+            UrlEncoder urlEncoder,
+            IOptions<ProviderSettings> providerSettings
+        )
         {
             _applicationContext = applicationContext;
             _sessionManager = sessionManager;
@@ -58,6 +65,7 @@ namespace Candlewire.Identity.ServerControllers
             _smsSender = smsSender;
             _logger = logger;
             _urlEncoder = urlEncoder;
+            _providerSettings = providerSettings.Value;
         }
 
         // ************************************************
@@ -102,6 +110,8 @@ namespace Candlewire.Identity.ServerControllers
             var userName = claims.FirstOrDefault(a => a.Type.ToLower().Equals("preferred_username"))?.Value;
             var nickName = claims.FirstOrDefault(a => a.Type.ToLower().Equals("nickname"))?.Value;
             var birthdate = claims.FirstOrDefault(a => a.Type.ToLower().Equals("birthdate"))?.Value;
+            var billingAddress = claims.FirstOrDefault(a => a.Type.ToLower().Equals("billing_address"))?.Value;
+            var shippingAddress = claims.FirstOrDefault(a => a.Type.ToLower().Equals("shipping_address"))?.Value;
 
             var model = new ProfileViewModel
             {
@@ -113,7 +123,9 @@ namespace Candlewire.Identity.ServerControllers
                 EmailAddress = user.Email,
                 EmailConfirmed = user.EmailConfirmed,
                 PhoneNumber = user.PhoneNumber,
-                PhoneConfirmed = user.PhoneNumberConfirmed
+                PhoneConfirmed = user.PhoneNumberConfirmed,
+                BillingAddress = billingAddress == null ? null : JsonConvert.DeserializeObject<AddressViewModel>(billingAddress),
+                ShippingAddress = shippingAddress == null ? null : JsonConvert.DeserializeObject<AddressViewModel>(shippingAddress)
             };
 
             return model;
@@ -443,13 +455,92 @@ namespace Candlewire.Identity.ServerControllers
 
             var claims = await _userManager.GetClaimsAsync(user);
             var birthDate = claims.FirstOrDefault(a => a.Type.ToLower().Equals("birthdate"))?.Value;
+            DateTime? defaultDate = null;
 
             var model = new BirthdateViewModel
             {
-                Birthdate = Convert.ToDateTime(birthDate)
+                Birthdate = (birthDate == null) ? defaultDate : Convert.ToDateTime(birthDate)
             };
 
             return model;
+        }
+
+        //*************************************************
+        // Address actions
+        // ************************************************
+        [HttpGet]
+        public async Task<IActionResult> Address(String type)
+        {
+            if (type == "billing_address" || type == "shipping_address")
+            {
+                var model = await BuildAddressViewModel(type);
+                return View("Address", model);
+            }
+            else
+            {
+                return RedirectToAction("Profile");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Address(AddressViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var claims = await _userManager.GetClaimsAsync(user);
+                var address = claims.FirstOrDefault(a => a.Type.ToLower().Equals(model.Type));
+
+                if (address != null)
+                {
+                    var claim = new Claim(model.Type, JsonConvert.SerializeObject(model.ToSerializable()));
+                    await _userManager.ReplaceClaimAsync(user, address, claim);
+
+                    var toastTitle = "Address Updated Successfully";
+                    var toastMessages = new List<String>((new String[] { "Your address was succesfully updated" }));
+                    var toastJson = JsonConvert.SerializeObject(toastMessages);
+                    var toastData = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(toastJson));
+                    var toastLevel = "success";
+                    return RedirectToAction("Profile", new { toastTitle = toastTitle, toastLevel = toastLevel, toastData = toastData });
+                }
+                else
+                {
+                    var claim = new Claim(model.Type, JsonConvert.SerializeObject(model.ToSerializable()));
+                    await _userManager.AddClaimAsync(user, claim);
+
+                    var toastTitle = "Address Added Successfully";
+                    var toastMessages = new List<String>((new String[] { "Your address was succesfully added" }));
+                    var toastJson = JsonConvert.SerializeObject(toastMessages);
+                    var toastData = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(toastJson));
+                    var toastLevel = "success";
+                    return RedirectToAction("Profile", new { toastTitle = toastTitle, toastLevel = toastLevel, toastData = toastData });
+                }
+            }
+            else
+            {
+                return View("Address", model);
+            }
+        }
+
+        private async Task<AddressViewModel> BuildAddressViewModel(String type)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            var claims = await _userManager.GetClaimsAsync(user);
+            var address = claims.FirstOrDefault(a => a.Type.ToLower().Equals(type.ToLower()));
+            var model = new AddressViewModel() { };
+            if (address == null)
+            {
+                return new AddressViewModel() { Type = type };
+            }
+            else
+            {
+                return JsonConvert.DeserializeObject<AddressViewModel>(address.Value);
+            }
         }
 
         //*************************************************
@@ -473,6 +564,41 @@ namespace Candlewire.Identity.ServerControllers
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null) { throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'."); }
                 var claims = await _userManager.GetClaimsAsync(user);
+
+
+                var authorized = false;
+                var restricted = false;
+                var globalizer = CultureInfo.CurrentCulture.TextInfo;
+                var logins = await _userManager.GetLoginsAsync(user);
+                if (logins.Count() > 0)
+                {
+                    var provider = logins.First().LoginProvider;
+                    var settings = (ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
+
+                    if (settings.LoginMode == "external")
+                    {
+                        ModelState.AddModelError("", "Your account is restricted from editing the email address");
+                        return View("Email", model);
+                    }
+                    else
+                    {
+                        var domain = model.EmailAddress.GetDomainName();
+                        authorized = settings.HasAuthorizedDomain(domain);
+                        restricted = settings.HasRestrictedDomain(domain);
+
+                        if (authorized == false)
+                        {
+                            ModelState.AddModelError("", "The provided email address violated the authorized domains policy");
+                            return View("Email", model);
+                        }
+
+                        if (restricted == true)
+                        {
+                            ModelState.AddModelError("", "The provided email address violates the restricted domains policy");
+                            return View("Email", model);
+                        }
+                    }
+                }
 
                 var emailMessages = new List<String>();
                 var emailAddress = model.EmailAddress;
@@ -528,8 +654,8 @@ namespace Candlewire.Identity.ServerControllers
                 }
                 else
                 {
-                    ModelState.AddModelError("", "An unexpected error occurred while updating you information.  Please try again");
-                    return View("Phone", model);
+                    ModelState.AddModelError("", "An unexpected error occurred while updating your information.  Please try again");
+                    return View("Email", model);
                 }
             }
             catch (Exception)

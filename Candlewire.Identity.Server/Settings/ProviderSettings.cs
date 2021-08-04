@@ -13,40 +13,34 @@ namespace Candlewire.Identity.Server.Settings
         public ProviderSetting Facebook { get; set; }
         public ProviderSettings Twitter { get; set; }
         public ProviderSetting Forms { get; set; }
+    }
 
-        public class ProviderSetting
+
+    public class ProviderSetting
+    {
+        public String ClientId { get; set; }
+        public String ClientSecret { get; set; }
+        public String CallbackPath { get; set; }
+        public String LoginMode { get; set; }
+        public List<String> AuthorizedDomains { get; set; }
+        public List<String> RestrictedDomains { get; set; }
+
+        public Boolean HasAuthorizedDomain(String domainName)
         {
-            public String LoginMode { get; set; }
-            public List<String> AuthorizedDomains { get; set; }
-            public List<String> RestrictedDomains { get; set; }
-            public List<ProviderClaim> ProviderClaims { get; set; }
-
-            public Boolean HasAuthorizedDomain(String domainName)
+            if (AuthorizedDomains == null || AuthorizedDomains.Count == 0) { return true; }
+            else
             {
-                if (AuthorizedDomains == null || AuthorizedDomains.Count == 0) { return true; }
-                else
-                {
-                    return AuthorizedDomains.Any(a => a.ToLower() == domainName.ToLower());
-                }
-            }
-
-            public Boolean HasRestrictedDomain(String domainName)
-            {
-                if (RestrictedDomains == null || RestrictedDomains.Count == 0) { return true; }
-                else
-                {
-                    return RestrictedDomains.Any(a => a.ToLower() == domainName.ToLower());
-                }
+                return AuthorizedDomains.Any(a => a.ToLower() == domainName.ToLower());
             }
         }
 
-        public class ProviderClaim
+        public Boolean HasRestrictedDomain(String domainName)
         {
-            public String ClaimName { get; set; }
-            public String ClaimType { get; set; }
-            public String Visible { get; set; }
-            public String Editable { get; set; }
-            public String Required { get; set; }
+            if (RestrictedDomains == null || RestrictedDomains.Count == 0) { return false; }
+            else
+            {
+                return RestrictedDomains.Any(a => a.ToLower() == domainName.ToLower());
+            }
         }
     }
 }

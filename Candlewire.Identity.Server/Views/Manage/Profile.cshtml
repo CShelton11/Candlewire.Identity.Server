@@ -32,6 +32,17 @@
                     <p></p>
                 </div>
             </div>
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Username">
+                <div class="col-12 col-md-10">
+                    <div class="row">
+                        <div class="form-group col-md-6 col-lg-6">
+                            <label asp-for="Username"></label>
+                            <input asp-for="Username" type="text" class="nickname-field form-control form-control-readonly" readonly="readonly" />
+                        </div>
+                    </div>
+                </div>
+                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+            </a>
             <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Name">
                 <div class="col-12 col-md-10">
                     <div class="row">
@@ -47,12 +58,47 @@
                 </div>
                 <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Username">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Address?type=shipping_address">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
-                            <label asp-for="Username"></label>
-                            <input asp-for="Username" type="text" class="nickname-field form-control form-control-readonly" readonly="readonly" />
+                            <label>Shipping Address</label>
+                            @if (Model.ShippingAddress != null)
+                            {
+                                <div class="col-12 form-control" style="background-color:#EEEEEE;height:90px;padding-top:10px;">
+                                    <div class="row">
+                                        <div class="col-12">@Model.ShippingAddress.Street</div>
+                                        <div class="col-12">@(Model.ShippingAddress.City + ", " + Model.ShippingAddress.State + " " + Model.ShippingAddress.Zip) </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            { 
+                                <div class="col-md-12 form-control" style="background-color:#EEEEEE;"></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
+            </a>
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" href="/Manage/Address?type=billing_address">
+                <div class="col-12 col-md-10">
+                    <div class="row">
+                        <div class="form-group col-md-6 col-lg-6">
+                            <label>Billing Address</label>
+                            @if (Model.BillingAddress != null)
+                            {
+                                <div class="col-12 form-control" style="background-color:#EEEEEE;height:90px;padding-top:10px;">
+                                    <div class="row">
+                                        <div class="col-12">@Model.BillingAddress.Street</div>
+                                        <div class="col-12">@(Model.BillingAddress.City + ", " + Model.BillingAddress.State + " " + Model.BillingAddress.Zip) </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-12 form-control" style="background-color:#EEEEEE;"></div>
+                            }
                         </div>
                     </div>
                 </div>

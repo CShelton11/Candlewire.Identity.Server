@@ -45,5 +45,8 @@ namespace Candlewire.Identity.Server.Models.ManageViewModels
         [Display(Name = "Date Of Birth")]
         [DataType(DataType.Date)]
         public DateTime? Birthdate { get; set; }
+
+        public AddressViewModel BillingAddress { get; set; }
+        public AddressViewModel ShippingAddress { get; set; }
     }
 }

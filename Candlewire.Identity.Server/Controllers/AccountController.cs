@@ -87,6 +87,12 @@ namespace Candlewire.Identity.ServerControllers
             _logger = loggerFactory.CreateLogger<AccountController>();
         }
 
+        [HttpPost]
+        public IActionResult Create()
+        {
+            return RedirectToAction("Signup", "Register");
+        }
+
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl = null)
@@ -637,7 +643,7 @@ namespace Candlewire.Identity.ServerControllers
             }
 
             var globalizer = CultureInfo.CurrentCulture.TextInfo;
-            var settings = (ProviderSettings.ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
+            var settings = (ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
             var mode = settings?.LoginMode;
             var claims = _claimManager.ExtractClaims(result);
             var roles = _claimManager.ExtractRoles(result);
@@ -648,45 +654,29 @@ namespace Candlewire.Identity.ServerControllers
             if (authorized == false)
             {
                 await _signInManager.SignoutExternalAsync(HttpContext);
-                throw new System.Exception("This domain is not authorized for external login.");
+                throw new System.Exception("The externally provided email address violated the authorized domains policy");
             }
 
             if (restricted == true)
             {
                 await _signInManager.SignoutExternalAsync(HttpContext);
-                throw new System.Exception("The email address associated with this login belongs to a restricted domain.");
+                throw new System.Exception("The externally provided email address violates the restricted domains policy");
             }
 
             if (user == null)
             {
-                if (mode?.ToLower() == "external")
+                if (mode?.ToLower() != "mixed")
                 {
-                    var requirements = settings.ProviderClaims.Where(a => a.Required.ToLower() == "true").ToList();
-                    var query = from a in requirements
-                                join b in claims on a.ClaimType.ToLower() equals b.Type.ToLower() into temp
-                                from c in temp.DefaultIfEmpty()
-                                select new { Requirement = a, Claim = c };
-                    if (query.Any(a => a.Claim == null))
-                    {
-                        await _signInManager.SignoutExternalAsync(HttpContext);
-                        throw new System.Exception("Required claims were missing from the external login provider.");
-                    }
-                    else
-                    {
-                        var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
-                        var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
-                        var providerKey = userId.Value;
+                    var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
+                    var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
+                    var firstName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName)?.Value;
+                    var lastName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName)?.Value;
+                    var nickName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName)?.Value;
+                    var birthDate = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate) == null ? null : (DateTime?)Convert.ToDateTime(claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate)?.Value);
 
-                        var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
-                        var firstName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName)?.Value;
-                        var lastName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName)?.Value;
-                        var nickName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName)?.Value;
-                        var birthDate = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate) == null ? null : (DateTime?)Convert.ToDateTime(claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate)?.Value);
-
-                        user = await _accountManager.AutoCreateUserAsync(emailAddress, firstName, lastName, nickName, birthDate, null, providerName, providerKey);
-                        await _accountManager.AutoAssignRolesAsync(user, providerName, domain, roles);
-                        return await ExternalLoginProcess(result, url);
-                    }
+                    user = await _accountManager.AutoCreateUserAsync(emailAddress, firstName, lastName, nickName, birthDate, null, provider, userId.Value);
+                    await _accountManager.AutoAssignRolesAsync(user, provider, domain, roles);
+                    return await ExternalLoginProcess(result, url);
                 }
                 else
                 {

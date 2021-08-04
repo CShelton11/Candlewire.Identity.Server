@@ -51,8 +51,10 @@ namespace Candlewire.Identity.Server.Controllers
         public async Task<IActionResult> Signup(String returnUrl)
         {
             var result = await ExternalResultAsync();
-            var model = new SignupViewModel() { ReturnUrl = returnUrl, AccountSource = "internal" };
-            if (result != null)
+            var source = result == null ? "internal" : "external";
+            var model = new SignupViewModel() { ReturnUrl = returnUrl, AccountSource = source };
+
+            if (source == "external")
             {
                 var principal = result.Principal;
                 var claims = _claimManager.ExtractClaims(result);
@@ -64,7 +66,6 @@ namespace Candlewire.Identity.Server.Controllers
                 model.FirstName = first;
                 model.LastName = last;
                 model.EmailAddress = email;
-                model.AccountSource = "external";
             }
 
             return View(model);
@@ -75,47 +76,49 @@ namespace Candlewire.Identity.Server.Controllers
         {
             if (ModelState.IsValid)
             {
-                var external = (await ExternalResultAsync()).Succeeded;
+                var result = await ExternalResultAsync();
+                var external = (await ExternalResultAsync())?.Succeeded;
                 var source = model.AccountSource;
-                if ((external && source == "internal") || (!external && source == "external"))
+                var authorized = false;
+                var restricted = false;
+
+                if ((external == true && source == "internal") || (external == false && source == "external"))
                 {
                     ModelState.AddModelError("", "Unauthorized registration flow detected");
+                    return View(model);
                 }
-                if (model.AccountSource == "internal")
+
+                if (external == true)
                 {
-                    var provider = "forms";
+                    var (provider, providerKey) = ExternalProviderAsync(result);
                     var globalizer = CultureInfo.CurrentCulture.TextInfo;
-                    var settings = (ProviderSettings.ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
+                    var settings = (ProviderSetting)_providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(_providerSettings, null);
                     var domain = model.EmailAddress.GetDomainName();
-                    var authorized = settings.HasAuthorizedDomain(domain);
-                    var restricted = settings.HasRestrictedDomain(domain);
-
-                    if (authorized == false)
-                    {
-                        ModelState.AddModelError("", "Email addresses can only be provided from authorized domains");
-                    }
-
-                    if (restricted == true)
-                    {
-                        ModelState.AddModelError("", "The provided email violates the restricted domains policy");
-                    }
+                    authorized = settings.HasAuthorizedDomain(domain);
+                    restricted = settings.HasRestrictedDomain(domain);
                 }
                 else
                 {
-                    DateTime year = DateTime.Now;
-                    TimeSpan timespan = year - Convert.ToDateTime(model.Birthdate);
-                    DateTime age = DateTime.MinValue.AddDays(timespan.Days);
-                    Int32 years = age.Year - 1;
-                    if (years < 18)
-                    {
-                        ModelState.AddModelError("", "You must be at least 18 years of age to create an account");
-                    }
+                    var settings = _providerSettings.Forms;
+                    var domain = model.EmailAddress.GetDomainName();
+                    authorized = settings.HasAuthorizedDomain(domain);
+                    restricted = settings.HasRestrictedDomain(domain);
+                }
 
-                    var exists = _userManager.Users.Count(a => a.Email.ToUpper() == model.EmailAddress.ToUpper()) != 0;
-                    if (exists == true)
-                    {
-                        ModelState.AddModelError("", "This email address is already associated with an account.");
-                    }
+                if (authorized == false)
+                {
+                    ModelState.AddModelError("", "The provided email address violated the authorized domains policy");
+                }
+
+                if (restricted == true)
+                {
+                    ModelState.AddModelError("", "The provided email address violates the restricted domains policy");
+                }
+
+                var exists = _userManager.Users.Count(a => a.Email.ToUpper() == model.EmailAddress.ToUpper()) != 0;
+                if (exists == true)
+                {
+                    ModelState.AddModelError("", "This email address is already associated with an account.");
                 }
 
                 if (ModelState.ErrorCount == 0)
@@ -237,7 +240,7 @@ namespace Candlewire.Identity.Server.Controllers
                     var reg = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
                     if (reg.AccountSource == "internal")
                     {
-                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, Convert.ToDateTime(reg.Birthdate), _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.Password);
+                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.Password);
                         await _sessionManager.RemoveAsync("Registration");
                         await _signinManager.SignInAsync(user, new AuthenticationProperties { });
                         return RedirectToLocal(model.ReturnUrl);
@@ -252,7 +255,7 @@ namespace Candlewire.Identity.Server.Controllers
                         var providerKey = userId.Value;
                         var domainName = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
 
-                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, Convert.ToDateTime(reg.Birthdate), _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
+                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
                         await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
                         await _sessionManager.RemoveAsync("Registration");
                         return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl });
@@ -277,6 +280,15 @@ namespace Candlewire.Identity.Server.Controllers
             if (resultA?.Succeeded == true) { result = resultA; }
             else if (resultB?.Succeeded == true) { result = resultB; }
             return result;
+        }
+
+        private (string provider, string providerKey) ExternalProviderAsync(AuthenticateResult result)
+        {
+            var externalUser = result.Principal;
+            var userIdClaim = externalUser.FindFirst(JwtClaimTypes.Subject) ?? externalUser.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
+            var provider = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];  // .AuthScheme is for ADFS
+            var providerUserId = userIdClaim.Value;
+            return (provider, providerUserId);
         }
 
         private async Task<AuthenticateResult> AuthenticateAsync(String scheme)

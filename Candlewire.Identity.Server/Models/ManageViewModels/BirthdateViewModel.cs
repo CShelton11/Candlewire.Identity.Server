@@ -9,7 +9,6 @@ namespace Candlewire.Identity.Server.Models.ManageViewModels
 {
     public class BirthdateViewModel: BaseViewModel
     {
-        [Required(ErrorMessage = "Date of birth is required")]
         [Display(Name = "Date Of Birth")]
         [DataType(DataType.Date)]
         public DateTime? Birthdate { get; set; }

@@ -44,10 +44,9 @@ namespace Candlewire.Identity.Server
         public void ConfigureServices(IServiceCollection services)
         {
             var assemblyName = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-            var connectionString = Configuration.GetConnectionString("CandlewireIdentityConnection");
+            var connectionString = Configuration.GetConnectionString("IdentityDatabase");
             var smsSettings = Configuration.GetSection("SmsSettings");
             var emailSettings = Configuration.GetSection("EmailSettings");
-            var authSettings = Configuration.GetSection("AuthSettings");
             var termSettings = Configuration.GetSection("TermSettings");
             var providerSettings = Configuration.GetSection("ProviderSettings");
 
@@ -114,7 +113,6 @@ namespace Candlewire.Identity.Server
             services.Configure<SmsSettings>(smsSettings);
             services.Configure<EmailSettings>(emailSettings);
             services.Configure<TermSettings>(termSettings);
-            services.Configure<AuthSettings>(authSettings);
             services.Configure<ProviderSettings>(options => providerSettings.Bind(options));
             services.AddTransient<IEmailSender, MessageSender>();
             services.AddTransient<ISmsSender, MessageSender>();
@@ -162,7 +160,7 @@ namespace Candlewire.Identity.Server
         public void Seed(IApplicationBuilder app)
         {
             var seeder = new SeedingManager();
-            seeder.Seed(Configuration.GetConnectionString("CandlewireIdentityConnection"));
+            seeder.Seed(Configuration.GetConnectionString("IdentityDatabase"));
         }
     }
 }
