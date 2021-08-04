@@ -37,14 +37,23 @@ namespace Candlewire.Identity.Server.Managers
         {
             var globalizer = CultureInfo.CurrentCulture.TextInfo;
             var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(this._providerSettings, null);
-            return settings.HasRestrictedDomain(domainName);
+            if (settings?.RestrictedDomains == null || settings?.RestrictedDomains.Count == 0) { return false; }
+            else
+            {
+                return (Boolean)settings?.RestrictedDomains.Any(a => a.ToLower() == domainName.ToLower());
+            }
         }
 
         public Boolean HasAuthorizedDomain(String provider, String domainName)
         {
             var globalizer = CultureInfo.CurrentCulture.TextInfo;
             var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(globalizer.ToTitleCase(provider))?.GetValue(this._providerSettings, null);
-            return settings.HasAuthorizedDomain(domainName);
+
+            if (settings?.AuthorizedDomains == null || settings?.AuthorizedDomains.Count == 0) { return true; }
+            else
+            {
+                return (Boolean)settings?.AuthorizedDomains.Any(a => a.ToLower() == domainName.ToLower());
+            }
         }
 
         public Boolean HasEditableClaim(String provider, String claimType)

@@ -26,6 +26,7 @@ using Candlewire.Identity.Server.Managers;
 using Candlewire.Identity.Server.Migrations;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Candlewire.Identity.Server
 {
@@ -85,15 +86,40 @@ namespace Candlewire.Identity.Server
 
             // Add authentiction to application
             services.AddAuthentication()
-            .AddOpenIdConnect("Google", o =>
+            .AddOpenIdConnect("azure", "Azure", options =>
             {
-                o.ClientId = "Test";
-                o.ClientSecret = "Test";
-                o.Authority = "https://accounts.google.com";
-                o.ResponseType = OpenIdConnectResponseType.Code;
-                o.CallbackPath = "/Account/ExternalLoginCallback/signin-google";
-                o.Scope.Add("profile");
-                o.Scope.Add("email");
+                options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                options.SignOutScheme = IdentityServerConstants.SignoutScheme;
+                options.Authority = "https://login.windows.net/tenentid";
+                options.ClientId = "clientid";
+                options.ClientSecret = "clientsecret";
+                options.ResponseType = OpenIdConnectResponseType.IdToken;
+                options.CallbackPath = "/Account/ExternalLoginCallback/signin-azure";
+            })
+            .AddGoogle("google", "Google", options =>
+            {
+                options.ClientId = providerSettings.GetSection("Google")["ClientId"];
+                options.ClientSecret = providerSettings.GetSection("Google")["ClientSecret"];
+                options.CallbackPath = providerSettings.GetSection("Google")["CallbackPath"];
+                options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+            })
+            .AddFacebook("facebook", "Facebook", options =>
+            {
+                options.AppId = providerSettings.GetSection("Facebook")["ClientId"];
+                options.AppSecret = providerSettings.GetSection("Facebook")["ClientSecret"];
+                options.CallbackPath = providerSettings.GetSection("Facebook")["CallbackPath"];
+                options.Scope.Add("email");
+                options.Fields.Add("name");
+                options.Fields.Add("email");
+            })
+            .AddOpenIdConnect("adfs", "Adfs", options =>
+            {
+                options.Authority = "https://sso.domain.com/adfs";
+                options.ClientId = providerSettings.GetSection("Adfs")["ClientId"];
+                options.ClientSecret = providerSettings.GetSection("Adfs")["ClientSecret"];
+                options.CallbackPath = providerSettings.GetSection("Adfs")["CallbackPath"];
+                options.TokenValidationParameters = new TokenValidationParameters { ValidateIssuer = false };
+                options.ResponseType = "code id_token";
             });
 
             // Configure cors

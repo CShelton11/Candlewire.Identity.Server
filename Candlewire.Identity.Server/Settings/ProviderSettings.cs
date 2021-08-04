@@ -12,10 +12,8 @@ namespace Candlewire.Identity.Server.Settings
         public ProviderSetting Adfs { get; set; }
         public ProviderSetting Google { get; set; }
         public ProviderSetting Facebook { get; set; }
-        public ProviderSettings Twitter { get; set; }
         public ProviderSetting Forms { get; set; }
     }
-
 
     public class ProviderSetting
     {
@@ -26,23 +24,6 @@ namespace Candlewire.Identity.Server.Settings
         public List<String> AuthorizedDomains { get; set; }
         public List<String> RestrictedDomains { get; set; }
         public List<String> EditableClaims { get; set; }
-
-        public Boolean HasAuthorizedDomain(String domainName)
-        {
-            if (AuthorizedDomains == null || AuthorizedDomains.Count == 0) { return true; }
-            else
-            {
-                return AuthorizedDomains.Any(a => a.ToLower() == domainName.ToLower());
-            }
-        }
-
-        public Boolean HasRestrictedDomain(String domainName)
-        {
-            if (RestrictedDomains == null || RestrictedDomains.Count == 0) { return false; }
-            else
-            {
-                return RestrictedDomains.Any(a => a.ToLower() == domainName.ToLower());
-            }
-        }
+        public List<String> VisibleClaims { get; set; }
     }
 }
