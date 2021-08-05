@@ -49,6 +49,45 @@ namespace Candlewire.Identity.Server.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Signup(String returnUrl, String firstName, String lastName, String nickName, String birthDate, String emailAddress, String phoneNumber, String shippingStreet, String shippingCity, String shippingState, String shippingZip, String billingStreet, String billingCity, String billingState, String billingZip)
+        {
+            var firstValue = (firstName ?? "").Trim();
+            var lastValue = (lastName ?? "").Trim();
+            var nickValue = (nickName ?? "").Trim();
+            var birthValue = String.IsNullOrEmpty(birthDate) == true ? null : (DateTime?)DateTime.Parse(birthDate);
+            var emailValue = (emailAddress ?? "").Trim();
+            var phoneValue = (phoneNumber ?? "").Trim();
+            var streetValue1 = (shippingStreet ?? "").Trim();
+            var cityValue1 = (shippingCity ?? "").Trim();
+            var stateValue1 = (shippingState ?? "").Trim();
+            var zipValue1 = (shippingZip ?? "").Trim();
+            var streetValue2 = (billingStreet ?? "").Trim();
+            var cityValue2 = (billingCity ?? "").Trim();
+            var stateValue2 = (billingState ?? "").Trim();
+            var zipValue2 = (billingZip ?? "").Trim();
+
+            var model = new SignupViewModel()
+            {
+                FirstName = firstValue,
+                LastName = lastValue,
+                Nickname = nickValue,
+                Birthdate = birthValue,
+                EmailAddress = emailValue,
+                PhoneNumber = phoneValue,
+                ShippingStreet = streetValue1,
+                ShippingCity = cityValue1,
+                ShippingState = stateValue1,
+                ShippingZip = zipValue1,
+                BillingStreet = streetValue2,
+                BillingCity = cityValue2,
+                BillingState = stateValue2,
+                BillingZip = zipValue2
+            };
+
+            return await Signup(model);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Signup(String returnUrl)
         {
             var result = await ExternalResultAsync();
@@ -99,32 +138,32 @@ namespace Candlewire.Identity.Server.Controllers
                 return View(model);
             }
 
-            var firstName = (model.FirstName ?? "").Trim();
-            var lastName = (model.LastName ?? "").Trim();
+            var firstValue = (model.FirstName ?? "").Trim();
+            var lastValue = (model.LastName ?? "").Trim();
             var firstRequired = _providerManager.HasRequiredClaim(provider, "given_name");
             var lastRequired = _providerManager.HasRequiredClaim(provider, "family_name");
-            if ((firstRequired == true || lastRequired == true) && (String.IsNullOrEmpty(firstName) || String.IsNullOrEmpty(lastName)))
+            if ((firstRequired == true || lastRequired == true) && (String.IsNullOrEmpty(firstValue) || String.IsNullOrEmpty(lastValue)))
             {
                 ModelState.AddModelError("", "First and last name are required fields");
             }
 
-            var emailAddress = (model.EmailAddress ?? "").Trim();
+            var emailValue = (model.EmailAddress ?? "").Trim();
             var emailRequired = _providerManager.HasRequiredClaim(provider, "email");
-            if (emailRequired == true && String.IsNullOrEmpty(emailAddress))
+            if (emailRequired == true && String.IsNullOrEmpty(emailValue))
             {
                 ModelState.AddModelError("", "Email Address is a required field");
             }
 
-            var nickName = (model.Nickname ?? "").Trim();
+            var nickValue = (model.Nickname ?? "").Trim();
             var nickRequired = _providerManager.HasRequiredClaim(provider, "nickname");
-            if (nickRequired == true && String.IsNullOrEmpty(nickName))
+            if (nickRequired == true && String.IsNullOrEmpty(nickValue))
             {
                 ModelState.AddModelError("", "Nickname is a required field");
             }
 
-            var birthDate = model.Birthdate;
+            var birthValue = model.Birthdate;
             var birthRequired = _providerManager.HasRequiredClaim(provider, "birthdate");
-            if (birthRequired == true && birthDate == null)
+            if (birthRequired == true && birthValue == null)
             {
                 ModelState.AddModelError("", "Date of birth is a required field");
             }
@@ -143,7 +182,76 @@ namespace Candlewire.Identity.Server.Controllers
                 ModelState.AddModelError("", "Confirm password is a required field");
             }
 
-            if (String.IsNullOrEmpty(emailAddress) == false)
+            var phoneValue = (model.PhoneNumber ?? "").Trim();
+            var phoneRequired = _providerManager.HasRequiredClaim(provider, "phone_number");
+            if (phoneRequired == true && String.IsNullOrEmpty(phoneValue))
+            {
+                ModelState.AddModelError("", "Phone number is a required field");
+            }
+
+            var streetValue1 = (model.ShippingStreet ?? "").Trim();
+            var cityValue1 = (model.ShippingCity ?? "").Trim();
+            var stateValue1 = (model.ShippingState ?? "").Trim();
+            var zipValue1 = (model.ShippingZip ?? "").Trim();
+            var shippingRequired = _providerManager.HasRequiredClaim(provider, "shipping_address");
+            var shippingProvided = false;
+            if (shippingRequired == true)
+            {
+                if (String.IsNullOrEmpty(streetValue1) || String.IsNullOrEmpty(cityValue1) || String.IsNullOrEmpty(stateValue1) || String.IsNullOrEmpty(zipValue1))
+                {
+                    ModelState.AddModelError("", "All shipping address fields are required");
+                    shippingProvided = false;
+                }
+            }
+            else
+            {
+                var total = (Convert.ToInt32(!String.IsNullOrEmpty(streetValue1)) + Convert.ToInt32(!String.IsNullOrEmpty(cityValue1)) + Convert.ToInt32(!String.IsNullOrEmpty(stateValue1)) + Convert.ToInt32(!String.IsNullOrEmpty(zipValue1)));
+                if (total > 0 && total < 4)
+                {
+                    if (String.IsNullOrEmpty(streetValue1) || String.IsNullOrEmpty(cityValue1) || String.IsNullOrEmpty(stateValue1) || String.IsNullOrEmpty(zipValue1))
+                    {
+                        ModelState.AddModelError("", "All shipping address fields must be provided if an address is being entered");
+                        shippingProvided = false;
+                    }
+                    else
+                    {
+                        shippingProvided = true;
+                    }
+                }
+            }
+
+            var streetValue2 = (model.BillingStreet ?? "").Trim();
+            var cityValue2 = (model.BillingCity ?? "").Trim();
+            var stateValue2 = (model.BillingState ?? "").Trim();
+            var zipValue2 = (model.BillingZip ?? "").Trim();
+            var billingRequired = _providerManager.HasRequiredClaim(provider, "billing_address");
+            var billingProvided = false;
+            if (billingRequired == true)
+            {
+                if (String.IsNullOrEmpty(streetValue2) || String.IsNullOrEmpty(cityValue2) || String.IsNullOrEmpty(stateValue2) || String.IsNullOrEmpty(zipValue2))
+                {
+                    ModelState.AddModelError("", "All billing address fields are required");
+                    billingProvided = false;
+                }
+            }
+            else
+            {
+                var total = (Convert.ToInt32(!String.IsNullOrEmpty(streetValue2)) + Convert.ToInt32(!String.IsNullOrEmpty(cityValue2)) + Convert.ToInt32(!String.IsNullOrEmpty(stateValue2)) + Convert.ToInt32(!String.IsNullOrEmpty(zipValue2)));
+                if (total > 0 && total < 4)
+                {
+                    if (String.IsNullOrEmpty(streetValue2) || String.IsNullOrEmpty(cityValue2) || String.IsNullOrEmpty(stateValue2) || String.IsNullOrEmpty(zipValue2))
+                    {
+                        ModelState.AddModelError("", "All billing address fields must be provided if an address is being entered");
+                        billingProvided = false;
+                    }
+                    else
+                    {
+                        billingProvided = true;
+                    }
+                }
+            }
+
+            if (String.IsNullOrEmpty(emailValue) == false)
             {
                 var authorized = false;
                 var restricted = false;
@@ -168,9 +276,13 @@ namespace Candlewire.Identity.Server.Controllers
                 }
             }
 
+            var shippingData = shippingProvided == true ? JsonConvert.SerializeObject(new { Street = streetValue1, City = streetValue1, State = stateValue1, Zip = zipValue1 }) : null;
+            var billingData = billingProvided == true ? JsonConvert.SerializeObject(new { Street = streetValue2, City = streetValue2, State = stateValue2, Zip = zipValue2 }) : null;
+
             if (ModelState.ErrorCount == 0)
             {
-                await _sessionManager.AddAsync("UserRegistrationCache", new UserRegistrationCache(model.LoginMode, model.EmailAddress, model.FirstName, model.LastName, model.Nickname, model.Birthdate, model.Password) { }, DateTime.UtcNow.AddMinutes(10));
+                var reg = new UserRegistrationCache(mode, emailValue, phoneValue, firstValue, lastValue, nickValue, birthValue, shippingData, billingData, model.Password);
+                await _sessionManager.AddAsync("UserRegistrationCache", reg, DateTime.UtcNow.AddMinutes(30));
                 return RedirectToAction("Terms", new { emailAddress = model.EmailAddress, returnUrl = model.ReturnUrl });
             }
 
@@ -217,7 +329,7 @@ namespace Candlewire.Identity.Server.Controllers
             if (reg != null)
             {
                 reg.TermsAgreement = true;
-                await _sessionManager.AddAsync("UserRegistrationCache", reg, DateTime.UtcNow.AddMinutes(10));
+                await _sessionManager.AddAsync("UserRegistrationCache", reg, DateTime.UtcNow.AddMinutes(30));
 
                 if (String.IsNullOrEmpty((reg.EmailAddress ?? "")))
                 {
@@ -325,7 +437,7 @@ namespace Candlewire.Identity.Server.Controllers
         {
             if (reg.LoginMode == LoginMode.Internal)
             {
-                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.Password);
+                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.ShippingAddress, reg.BillingAddress, reg.Password);
                 await _sessionManager.RemoveAsync("Registration");
                 await _signinManager.SignInAsync(user, new AuthenticationProperties { });
             }
@@ -338,7 +450,7 @@ namespace Candlewire.Identity.Server.Controllers
                 var providerKey = GetProviderKey(result);
                 var domainName = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
 
-                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
+                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.ShippingAddress, reg.BillingAddress, providerName, providerKey, reg.Password);
                 await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
                 await _sessionManager.RemoveAsync("Registration");
             }
@@ -418,14 +530,17 @@ namespace Candlewire.Identity.Server.Controllers
         {
             public LoginMode LoginMode { get; set; }
             public String EmailAddress { get; set; }
+            public String PhoneNumber { get; set; }
             public String FirstName { get; set; }
             public String LastName { get; set; }
             public String Nickname { get; set; }
             public DateTime? Birthdate { get; set; }
             public String Password { get; set; }
             public Boolean TermsAgreement { get; set; }
+            public String ShippingAddress { get; set; }
+            public String BillingAddress { get; set; }
 
-            public UserRegistrationCache(LoginMode loginMode, String emailAddress, String firstName, String lastName, String nickName, DateTime? birthDate, String password)
+            public UserRegistrationCache(LoginMode loginMode, String emailAddress, String phoneNumber, String firstName, String lastName, String nickName, DateTime? birthDate, String shippingAddress, String billingAddress, String password)
             {
                 LoginMode = loginMode;
                 EmailAddress = emailAddress;

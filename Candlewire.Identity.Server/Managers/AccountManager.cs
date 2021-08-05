@@ -27,17 +27,17 @@ namespace Candlewire.Identity.Server.Managers
             _logger = loggerFactory.CreateLogger<AccountManager>();
         }
 
-        public async Task<ApplicationUser> AutoCreateUserAsync(String emailAddress, String firstName, String lastName, String nickName, DateTime? birthDate, String termDocument, String provider, String providerKey, String password = null)
+        public async Task<ApplicationUser> AutoCreateUserAsync(String emailAddress, String phoneNumber, String firstName, String lastName, String nickName, DateTime? birthDate, String termDocument, String shippingAddress, String billingAddress, String provider, String providerKey, String password = null)
         {
             var userName = Guid.NewGuid().ToString();
-            var claims = _claimManager.BuildClaims(userName, emailAddress, firstName, lastName, nickName, birthDate, termDocument);
+            var claims = _claimManager.BuildClaims(userName, emailAddress, phoneNumber, firstName, lastName, nickName, birthDate, shippingAddress, billingAddress, termDocument);
             return await AutoCreateUserAsync(userName, claims, provider, providerKey, password);
         }
 
-        public async Task<ApplicationUser> AutoCreateUserAsync(String emailAddress, String firstName, String lastName, String nickName, DateTime? birthDate, String termDocument, String password)
+        public async Task<ApplicationUser> AutoCreateUserAsync(String emailAddress, String phoneNumber, String firstName, String lastName, String nickName, DateTime? birthDate, String termDocument, String shippingAddress, String billingAddress, String password)
         {
             var userName = Guid.NewGuid().ToString();
-            var claims = _claimManager.BuildClaims(userName, emailAddress, firstName, lastName, nickName, birthDate, termDocument);
+            var claims = _claimManager.BuildClaims(userName, emailAddress, phoneNumber, firstName, lastName, nickName, birthDate, shippingAddress, billingAddress, termDocument);
             return await AutoCreateUserAsync(userName, claims, null, null, password);
         }
 

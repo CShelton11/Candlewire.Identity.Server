@@ -677,16 +677,17 @@ namespace Candlewire.Identity.ServerControllers
 
             if (user == null)
             {
-                if (mode != LoginMode.External)
+                if (mode == LoginMode.External)
                 {
                     var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
-                    var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
-                    var firstName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName)?.Value;
-                    var lastName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName)?.Value;
-                    var nickName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName)?.Value;
+                    var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
+                    var phoneNumber = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.PhoneNumber)?.Value;
+                    var firstName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.GivenName)?.Value;
+                    var lastName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.FamilyName)?.Value;
+                    var nickName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName)?.Value;
                     var birthDate = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate) == null ? null : (DateTime?)Convert.ToDateTime(claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate)?.Value);
 
-                    user = await _accountManager.AutoCreateUserAsync(emailAddress, firstName, lastName, nickName, birthDate, null, provider, userId.Value);
+                    user = await _accountManager.AutoCreateUserAsync(emailAddress, phoneNumber, firstName, lastName, nickName, birthDate, null, null, null, provider, userId.Value);
                     await _accountManager.AutoAssignRolesAsync(user, provider, domain, roles);
                     return await ExternalLoginProcess(result, url);
                 }

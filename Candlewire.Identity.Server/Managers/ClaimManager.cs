@@ -26,6 +26,7 @@ namespace Candlewire.Identity.Server.Managers
             var firstName = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.GivenName)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.GivenName)?.Value;
             var lastName = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.FamilyName)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.Surname)?.Value;
             var emailAddress = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Email)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
+            var phoneNumber = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.PhoneNumber)?.Value ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.MobilePhone)?.Value;
             var nickName = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.NickName)?.Value;
             var upnValue = claims.FirstOrDefault(a => a.Type == ClaimTypes.Upn)?.Value;
 
@@ -54,7 +55,9 @@ namespace Candlewire.Identity.Server.Managers
             if (firstName != null) { basics.Add(new Claim(JwtClaimTypes.GivenName, firstName)); }
             if (lastName != null) { basics.Add(new Claim(JwtClaimTypes.FamilyName, lastName)); }
             if (emailAddress != null) { basics.Add(new Claim(JwtClaimTypes.Email, emailAddress.Replace(";", "").Trim())); }
+            if (phoneNumber != null) { basics.Add(new Claim(JwtClaimTypes.PhoneNumber, phoneNumber)); }
             if (nickName != null) { basics.Add(new Claim(JwtClaimTypes.NickName, nickName)); }
+            /* Need to look into extracting address information as well */
 
             return basics;
         }
@@ -67,20 +70,23 @@ namespace Candlewire.Identity.Server.Managers
             return roleClaims.Select(a => a.Value).ToList();
         }
 
-        public List<Claim> BuildClaims(String userName, String emailAddress, String firstName, String lastName, String nickName, DateTime? birthDate, String terms = null)
+        public List<Claim> BuildClaims(String userName, String emailAddress, String phoneNumber, String firstName, String lastName, String nickName, DateTime? birthDate, String shippingAddress, String billingAddress, String terms = null)
         {
             var claims = new List<Claim>();
 
+            if (!String.IsNullOrEmpty(emailAddress)) { claims.Add(new Claim(JwtClaimTypes.Email, emailAddress.Trim().Replace(";", ""))); };
+            if (!String.IsNullOrEmpty(phoneNumber)) { claims.Add(new Claim(JwtClaimTypes.PhoneNumber, phoneNumber.Trim())); };
             if (!String.IsNullOrEmpty(nickName)) { claims.Add(new Claim(JwtClaimTypes.Name, firstName.Trim() + " " + lastName.Trim())); }
             if (!String.IsNullOrEmpty(firstName)) { claims.Add(new Claim(JwtClaimTypes.GivenName, firstName.Trim())); }
             if (!String.IsNullOrEmpty(lastName)) { claims.Add(new Claim(JwtClaimTypes.FamilyName, lastName.Trim())); }
             if (!String.IsNullOrEmpty(userName)) { claims.Add(new Claim(JwtClaimTypes.PreferredUserName, userName)); }
             if (!String.IsNullOrEmpty(nickName)) { claims.Add(new Claim(JwtClaimTypes.NickName, nickName.Trim())); }
             if (!String.IsNullOrEmpty(terms)) { claims.Add(new Claim("terms", terms.Trim())); }
-            if (!String.IsNullOrEmpty(firstName) && !String.IsNullOrEmpty(lastName)) { claims.Add(new Claim(JwtClaimTypes.Name, firstName.Trim() + " " + lastName.Trim())); }
+            if (!String.IsNullOrEmpty(shippingAddress)) { claims.Add(new Claim("shipping_address", shippingAddress.Trim())); }
+            if (!String.IsNullOrEmpty(billingAddress)) { claims.Add(new Claim("billing_address", billingAddress.Trim())); }
             if (birthDate != null) { claims.Add(new Claim(JwtClaimTypes.BirthDate, Convert.ToDateTime(birthDate).ToString("M/d/yyyy"))); }
-
-            claims.Add(new Claim(JwtClaimTypes.Email, emailAddress.Trim().Replace(";", "")));
+            if (!String.IsNullOrEmpty(firstName) && !String.IsNullOrEmpty(lastName)) { claims.Add(new Claim(JwtClaimTypes.Name, firstName.Trim() + " " + lastName.Trim())); }
+            
             return claims;
         }
     }
