@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Candlewire.Identity.Server.Attributes;
 using Candlewire.Identity.Server.Contexts;
 using Candlewire.Identity.Server.Entities;
+using Candlewire.Identity.Server.Enums;
 using Candlewire.Identity.Server.Extensions;
 using Candlewire.Identity.Server.Interfaces;
 using Candlewire.Identity.Server.Managers;
@@ -1049,6 +1050,14 @@ namespace Candlewire.Identity.ServerControllers
             if (user == null)
             {
                 throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            var provider = await GetProvider();
+            var mode = _providerManager.GetLoginMode(provider);
+            if (mode == LoginMode.External)
+            {
+                ModelState.AddModelError("", "Passwords can not be configured for this account type");
+                return View(model);
             }
 
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);

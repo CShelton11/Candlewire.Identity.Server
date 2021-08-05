@@ -1,4 +1,5 @@
 ﻿using Candlewire.Identity.Server.Attributes;
+using Candlewire.Identity.Server.Enums;
 using Candlewire.Identity.Server.Models.BaseViewModels;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,6 @@ namespace Candlewire.Identity.Server.Models.RegisterViewModels
 {
     public class SignupViewModel: BaseViewModel
     {
-        [Required]
         [EmailAddress]
         [Display(Name = "Email Address")]
         public String EmailAddress { get; set; }
@@ -38,11 +38,10 @@ namespace Candlewire.Identity.Server.Models.RegisterViewModels
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match")]
         public String ConfirmPassword { get; set; }
 
-        [Required]
-        public String AccountSource { get; set; }
-
         public String ReturnUrl { get; set; }
+        public LoginMode LoginMode { get; set; }
         public String EditableClaims { get; set; }
         public String VisibleClaims { get; set; }
+        public String RequireClaims { get; set; }
     }
 }

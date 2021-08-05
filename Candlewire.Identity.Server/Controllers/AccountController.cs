@@ -539,6 +539,19 @@ namespace Candlewire.Identity.ServerControllers
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null) {
+                    model.Completed = true;
+                    return View(model);
+                }
+
+                var provider = await GetProvider(user);
+                var mode = _providerManager.GetLoginMode(provider);
+                if (mode == LoginMode.External)
+                {
+                    ModelState.AddModelError("", "Password reset is not available for this account");
+                    return View(model);
+                }
+
                 var code = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var callbackUrl = Url.Action("Reset", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
                 await _emailSender.SendEmailAsync(model.Email, "Reset Password", $"Please reset your password by clicking here: <a href='{callbackUrl}'>link</a>");
@@ -664,7 +677,7 @@ namespace Candlewire.Identity.ServerControllers
 
             if (user == null)
             {
-                if (mode?.ToLower() != "mixed")
+                if (mode != LoginMode.External)
                 {
                     var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
                     var emailAddress = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email) == null ? null : claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value;
@@ -733,6 +746,14 @@ namespace Candlewire.Identity.ServerControllers
                 // this URL is re-triggered when we call challenge
                 return Challenge(AccountOptions.WindowsAuthenticationSchemeName);
             }
+        }
+
+        public async Task<String> GetProvider(ApplicationUser user)
+        {
+            var claims = await _userManager.GetClaimsAsync(user);
+            var logins = await _userManager.GetLoginsAsync(user);
+            var provider = logins == null || logins.Count == 0 ? "Forms" : logins.First().LoginProvider;
+            return provider;
         }
 
         private async Task<(ApplicationUser user, string provider, string providerUserId)> FindUserFromExternalProviderAsync(AuthenticateResult result)

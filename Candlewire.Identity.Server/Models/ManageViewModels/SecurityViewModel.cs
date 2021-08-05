@@ -1,4 +1,5 @@
-﻿using Candlewire.Identity.Server.Models.BaseViewModels;
+﻿using Candlewire.Identity.Server.Enums;
+using Candlewire.Identity.Server.Models.BaseViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -30,5 +31,7 @@ namespace Candlewire.Identity.Server.Models.ManageViewModels
         [Required]
         [Display(Name = "Two Factor Authentication")]
         public Boolean? TwoFactorEnabled { get; set; }
+
+        public LoginMode LoginMode { get; set; }
     }
 }

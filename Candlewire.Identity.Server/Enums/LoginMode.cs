@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 
 namespace Candlewire.Identity.Server.Enums
 {
-    public enum AuthenticationType
+    public enum LoginMode
     {
         Internal = 1,
-        External = 2
+        External = 2,
+        Mixed = 3
     }
 }

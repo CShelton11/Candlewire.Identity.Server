@@ -1,4 +1,5 @@
 ﻿using Candlewire.Identity.Server.Entities;
+using Candlewire.Identity.Server.Enums;
 using Candlewire.Identity.Server.Extensions;
 using Candlewire.Identity.Server.Interfaces;
 using Candlewire.Identity.Server.Managers;
@@ -34,7 +35,6 @@ namespace Candlewire.Identity.Server.Controllers
         private readonly IEmailSender _emailSender;
         private readonly TermSettings _termSettings;
 
-
         public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, ClaimManager claimManager, IEmailSender emailSender, IOptions<TermSettings> termSettings, ProviderManager providerManager)
         {
             _signinManager = signinManager;
@@ -52,14 +52,18 @@ namespace Candlewire.Identity.Server.Controllers
         public async Task<IActionResult> Signup(String returnUrl)
         {
             var result = await ExternalResultAsync();
-            var source = result == null ? "internal" : "external";
-            var model = new SignupViewModel() { ReturnUrl = returnUrl, AccountSource = source };
+            var provider = GetProvider(result);
+            var mode = _providerManager.GetLoginMode(provider);
+            var model = new SignupViewModel() { ReturnUrl = returnUrl, LoginMode = mode };
+            
+            var editables = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var visibles = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var required = String.Join(",", _providerManager.GetRequireClaims(provider).ToArray());
 
-            if (source == "external")
+            if (mode == Enums.LoginMode.External || mode == Enums.LoginMode.Mixed)
             {
                 var principal = result.Principal;
                 var claims = _claimManager.ExtractClaims(result);
-
                 var first = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.GivenName)?.Value;
                 var last = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.FamilyName)?.Value;
                 var email = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Email)?.Value;
@@ -67,6 +71,15 @@ namespace Candlewire.Identity.Server.Controllers
                 model.FirstName = first;
                 model.LastName = last;
                 model.EmailAddress = email;
+                model.VisibleClaims = visibles;
+                model.EditableClaims = editables;
+                model.RequireClaims = required;
+            }
+            else
+            {
+                model.VisibleClaims = visibles;
+                model.EditableClaims = editables;
+                model.RequireClaims = required;
             }
 
             return View(model);
@@ -75,33 +88,68 @@ namespace Candlewire.Identity.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Signup(SignupViewModel model)
         {
-            if (ModelState.IsValid)
+
+            var result = await ExternalResultAsync();
+            var mode = model.LoginMode;
+            var provider = GetProvider(result);
+
+            if ((result != null && mode == LoginMode.Internal) || (result == null && (mode == LoginMode.External || mode != LoginMode.Mixed)))
             {
-                var result = await ExternalResultAsync();
-                var external = (await ExternalResultAsync())?.Succeeded;
-                var source = model.AccountSource;
+                ModelState.AddModelError("", "Unauthorized registration flow detected");
+                return View(model);
+            }
+
+            var firstName = (model.FirstName ?? "").Trim();
+            var lastName = (model.LastName ?? "").Trim();
+            var firstRequired = _providerManager.HasRequiredClaim(provider, "given_name");
+            var lastRequired = _providerManager.HasRequiredClaim(provider, "family_name");
+            if ((firstRequired == true || lastRequired == true) && (String.IsNullOrEmpty(firstName) || String.IsNullOrEmpty(lastName)))
+            {
+                ModelState.AddModelError("", "First and last name are required fields");
+            }
+
+            var emailAddress = (model.EmailAddress ?? "").Trim();
+            var emailRequired = _providerManager.HasRequiredClaim(provider, "email");
+            if (emailRequired == true && String.IsNullOrEmpty(emailAddress))
+            {
+                ModelState.AddModelError("", "Email Address is a required field");
+            }
+
+            var nickName = (model.Nickname ?? "").Trim();
+            var nickRequired = _providerManager.HasRequiredClaim(provider, "nickname");
+            if (nickRequired == true && String.IsNullOrEmpty(nickName))
+            {
+                ModelState.AddModelError("", "Nickname is a required field");
+            }
+
+            var birthDate = model.Birthdate;
+            var birthRequired = _providerManager.HasRequiredClaim(provider, "birthdate");
+            if (birthRequired == true && birthDate == null)
+            {
+                ModelState.AddModelError("", "Date of birth is a required field");
+            }
+
+            var passwordValue = (model.Password ?? "").Trim();
+            var passwordRequired = mode == LoginMode.Mixed || mode == LoginMode.Internal ? true : false;
+            if (passwordRequired == true && String.IsNullOrEmpty(passwordValue))
+            {
+                ModelState.AddModelError("", "Password is a required field");
+            }
+
+            var confirmValue = (model.ConfirmPassword ?? "").Trim();
+            var confirmRequired = mode == LoginMode.Mixed || mode == LoginMode.Internal ? true : false;
+            if (confirmRequired == true && String.IsNullOrEmpty(confirmValue))
+            {
+                ModelState.AddModelError("", "Confirm password is a required field");
+            }
+
+            if (String.IsNullOrEmpty(emailAddress) == false)
+            {
                 var authorized = false;
                 var restricted = false;
-
-                if ((external == true && source == "internal") || (external == false && source == "external"))
-                {
-                    ModelState.AddModelError("", "Unauthorized registration flow detected");
-                    return View(model);
-                }
-
-                if (external == true)
-                {
-                    var (provider, providerKey) = ExternalProviderAsync(result);
-                    var domain = model.EmailAddress.GetDomainName();
-                    authorized = _providerManager.HasAuthorizedDomain(provider, domain);
-                    restricted = _providerManager.HasRestrictedDomain(provider, domain);
-                }
-                else
-                {
-                    var domain = model.EmailAddress.GetDomainName();
-                    authorized = _providerManager.HasAuthorizedDomain("Forms", domain);
-                    restricted = _providerManager.HasRestrictedDomain("Forms", domain);
-                }
+                var domain = model.EmailAddress.GetDomainName();
+                authorized = _providerManager.HasAuthorizedDomain(provider, domain);
+                restricted = _providerManager.HasRestrictedDomain(provider, domain);
 
                 if (authorized == false)
                 {
@@ -118,12 +166,12 @@ namespace Candlewire.Identity.Server.Controllers
                 {
                     ModelState.AddModelError("", "This email address is already associated with an account.");
                 }
+            }
 
-                if (ModelState.ErrorCount == 0)
-                {
-                    await _sessionManager.AddAsync("UserRegistrationCache", new UserRegistrationCache(model.AccountSource, model.EmailAddress, model.FirstName, model.LastName, model.Nickname, model.Birthdate, model.Password) { }, DateTime.UtcNow.AddMinutes(10));
-                    return RedirectToAction("Terms", new { emailAddress = model.EmailAddress, returnUrl = model.ReturnUrl });
-                }
+            if (ModelState.ErrorCount == 0)
+            {
+                await _sessionManager.AddAsync("UserRegistrationCache", new UserRegistrationCache(model.LoginMode, model.EmailAddress, model.FirstName, model.LastName, model.Nickname, model.Birthdate, model.Password) { }, DateTime.UtcNow.AddMinutes(10));
+                return RedirectToAction("Terms", new { emailAddress = model.EmailAddress, returnUrl = model.ReturnUrl });
             }
 
             model.Password = "";
@@ -170,7 +218,24 @@ namespace Candlewire.Identity.Server.Controllers
             {
                 reg.TermsAgreement = true;
                 await _sessionManager.AddAsync("UserRegistrationCache", reg, DateTime.UtcNow.AddMinutes(10));
-                return RedirectToAction("Verify", new { emailAddress = model.TermsEmail, returnUrl = model.ReturnUrl });
+
+                if (String.IsNullOrEmpty((reg.EmailAddress ?? "")))
+                {
+                    var registration = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
+                    await RegisterUser(registration);
+                    if (registration.LoginMode == LoginMode.Internal)
+                    {
+                        return RedirectToLocal(model.ReturnUrl);
+                    }
+                    else
+                    {
+                        return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl });
+                    }
+                }
+                else
+                {
+                    return RedirectToAction("Verify", new { emailAddress = model.TermsEmail, returnUrl = model.ReturnUrl });
+                }
             }
             else
             {
@@ -235,27 +300,14 @@ namespace Candlewire.Identity.Server.Controllers
                 var verified = await _tokenManager.VerifyEmailTokenAsync(token);
                 if (verified == true)
                 {
-                    var reg = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
-                    if (reg.AccountSource == "internal")
+                    var registration = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
+                    await RegisterUser(registration);
+                    if (registration.LoginMode == LoginMode.Internal)
                     {
-                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.Password);
-                        await _sessionManager.RemoveAsync("Registration");
-                        await _signinManager.SignInAsync(user, new AuthenticationProperties { });
                         return RedirectToLocal(model.ReturnUrl);
                     }
                     else
                     {
-                        var result = await ExternalResultAsync();
-                        var claims = _claimManager.ExtractClaims(result);
-                        var roles = _claimManager.ExtractRoles(result);
-                        var userId = result.Principal.FindFirst(JwtClaimTypes.Subject) ?? result.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
-                        var providerName = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];
-                        var providerKey = userId.Value;
-                        var domainName = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
-
-                        var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
-                        await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
-                        await _sessionManager.RemoveAsync("Registration");
                         return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl });
                     }
                 }
@@ -266,6 +318,29 @@ namespace Candlewire.Identity.Server.Controllers
                     model.ToastLevel = "failure";
                     return View("Verify", model);
                 }
+            }
+        }
+
+        private async Task RegisterUser(UserRegistrationCache reg)
+        {
+            if (reg.LoginMode == LoginMode.Internal)
+            {
+                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.Password);
+                await _sessionManager.RemoveAsync("Registration");
+                await _signinManager.SignInAsync(user, new AuthenticationProperties { });
+            }
+            else
+            {
+                var result = await ExternalResultAsync();
+                var claims = _claimManager.ExtractClaims(result);
+                var roles = _claimManager.ExtractRoles(result);
+                var providerName = GetProvider(result);
+                var providerKey = GetProviderKey(result);
+                var domainName = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
+
+                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), providerName, providerKey, reg.Password);
+                await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
+                await _sessionManager.RemoveAsync("Registration");
             }
         }
 
@@ -280,13 +355,39 @@ namespace Candlewire.Identity.Server.Controllers
             return result;
         }
 
-        private (string provider, string providerKey) ExternalProviderAsync(AuthenticateResult result)
+        private String GetProvider(AuthenticateResult result)
         {
-            var externalUser = result.Principal;
-            var userIdClaim = externalUser.FindFirst(JwtClaimTypes.Subject) ?? externalUser.FindFirst(ClaimTypes.NameIdentifier) ?? throw new Exception("Unknown userid");
-            var provider = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];  // .AuthScheme is for ADFS
-            var providerUserId = userIdClaim.Value;
-            return (provider, providerUserId);
+            if (result?.Succeeded == true)
+            {
+                var globalizer = CultureInfo.CurrentCulture.TextInfo;
+                var provider = result.Properties.Items.ContainsKey("scheme") == true ? result.Properties.Items["scheme"] : result.Properties.Items[".AuthScheme"];  // .AuthScheme is for ADFS
+                return globalizer.ToTitleCase(provider);
+            }
+            else
+            {
+                return "Forms";
+            }
+        }
+
+        private String GetProviderKey(AuthenticateResult result)
+        {
+            if (result?.Succeeded == true)
+            {
+                var externalUser = result.Principal;
+                var externalClaim = externalUser.FindFirst(JwtClaimTypes.Subject) ?? externalUser.FindFirst(ClaimTypes.NameIdentifier);
+                if (externalClaim == null)
+                {
+                    throw new System.Exception("Provider key is unavailable");
+                }
+                else
+                {
+                    return externalClaim.Value;
+                }
+            }
+            else
+            {
+                throw new System.Exception("Provider key is unavailable");
+            }
         }
 
         private async Task<AuthenticateResult> AuthenticateAsync(String scheme)
@@ -315,7 +416,7 @@ namespace Candlewire.Identity.Server.Controllers
 
         private class UserRegistrationCache
         {
-            public String AccountSource { get; set; }
+            public LoginMode LoginMode { get; set; }
             public String EmailAddress { get; set; }
             public String FirstName { get; set; }
             public String LastName { get; set; }
@@ -324,9 +425,9 @@ namespace Candlewire.Identity.Server.Controllers
             public String Password { get; set; }
             public Boolean TermsAgreement { get; set; }
 
-            public UserRegistrationCache(String accountSource, String emailAddress, String firstName, String lastName, String nickName, DateTime? birthDate, String password)
+            public UserRegistrationCache(LoginMode loginMode, String emailAddress, String firstName, String lastName, String nickName, DateTime? birthDate, String password)
             {
-                AccountSource = accountSource;
+                LoginMode = loginMode;
                 EmailAddress = emailAddress;
                 FirstName = firstName;
                 LastName = lastName;

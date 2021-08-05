@@ -1,6 +1,13 @@
-﻿@model SignupViewModel
+﻿@using Candlewire.Identity.Server.Enums 
 
-@{ Layout = "/Views/Shared/_Layout.cshtml"; }
+@model SignupViewModel
+
+@{ 
+    Layout = "/Views/Shared/_Layout.cshtml";
+
+    var visibleClaims = (Model.VisibleClaims ?? "").Split((",").ToCharArray()).ToList();
+    var editableClaims = (Model.EditableClaims ?? "").Split((",").ToCharArray()).ToList();
+}
 
 <link rel="stylesheet" href="~/css/register-signup.css" />
 <script type="text/javascript" src="~/js/register-signup.js"></script>
@@ -14,38 +21,29 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Sign Up</h3>
-                    <div class="card-subtitle">@(Model.AccountSource.ToLower() == "internal" ? "Lets get things set up!" : "We just need a little more info...")</div>
+                    <div class="card-subtitle">@(Model.LoginMode == LoginMode.Internal ? "Lets get things set up!" : "We just need a little more info...")</div>
                 </div>
                 <div class="card-body">
                     <form method="post">
                         <div class="row">
-                            <div class="form-group hidden-field">
-                                @Html.HiddenFor(a => a.ReturnUrl)
-                            </div>
-                            <div class="form-group hidden-field">
-                                @Html.HiddenFor(a => a.AccountSource)
-                            </div>
                             <div class="col-md-6">
                                 <h5>User Info</h5>
                                 <div class="row">
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-6" style="@(visibleClaims.Contains("given_name") && editableClaims.Contains("given_name") ? "" : "display:none")">
                                         <label asp-for="FirstName"></label>
                                         @Html.EditorFor(a => a.FirstName, new { htmlAttributes = new { @class = "form-control" } })
-                                        <span asp-validation-for="FirstName" class="text-danger"></span>
                                     </div>
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-6" style="@(visibleClaims.Contains("family_name") && editableClaims.Contains("family_name") ? "" : "display:none")">
                                         <label asp-for="LastName"></label>
                                         @Html.EditorFor(a => a.LastName, new { htmlAttributes = new { @class = "form-control" } })
-                                        <span asp-validation-for="LastName" class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="form-group col-md-4">
+                                    <div class="form-group col-md-4"  style="@(visibleClaims.Contains("nickname") && editableClaims.Contains("nickname") ? "" : "display:none")">
                                         <label asp-for="Nickname"></label>
                                         @Html.EditorFor(a => a.Nickname, new { htmlAttributes = new { @class = "form-control" } })
-                                        <span asp-validation-for="Nickname" class="text-danger"></span>
                                     </div>
-                                    <div class="form-group col-md-4">
+                                    <div class="form-group col-md-4" style="@(visibleClaims.Contains("birthdate") && editableClaims.Contains("birthdate") ? "" : "display:none")">
                                         <label>
                                             <label asp-for="Birthdate"></label>
                                             <input asp-for="Birthdate" type="text" class="birth-date-field form-control" />
@@ -53,7 +51,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6" style="@(visibleClaims.Contains("email") && editableClaims.Contains("email") ? "" : "display:none")">
                                 <h5>Contact Info</h5>
                                 <div class="row">
                                     <div class="form-group col-md-6">
@@ -63,7 +61,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
+                        <div class="row" style="@(Model.LoginMode == LoginMode.External ? "" : "display:none")">
                             <div class="col-md-6">
                                 <h5>Setup a Password</h5>
                                 <div class="row">
@@ -80,7 +78,6 @@
                                                 <div class="password-meter"><div class="password-progress"></div></div>
                                                 <span class="password-strength"></span>
                                             </div>
-                                            <span asp-validation-for="Password" class="hidden-field"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -91,7 +88,6 @@
                                             <div class="input-group confirm-input-group">
                                                 <input asp-for="ConfirmPassword" class="form-control confirm-field" />
                                                 <span class="input-group-addon confirm-image" aria-hidden="true" title="Passwords match"><span class="fa fa-check-circle"></span></span>
-                                                <span asp-validation-for="ConfirmPassword" class="hidden-field"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -101,6 +97,13 @@
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary col-sm-12 col-md-3 col-xl-2">Next</button>
                             @Html.ActionLink("Cancel", "Login", "Account", null, new { @class = "btn btn-secondary col-sm-12 col-md-3 col-xl-2" })
+                        </div>
+                        <div class="form-hidden" style="display:none;">
+                            @Html.HiddenFor(a => a.ReturnUrl)
+                            @Html.HiddenFor(a => a.LoginMode)
+                            @Html.HiddenFor(a => a.EditableClaims)
+                            @Html.HiddenFor(a => a.VisibleClaims)
+                            @Html.HiddenFor(a => a.RequireClaims)
                         </div>
                     </form>
                 </div>

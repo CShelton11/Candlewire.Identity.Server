@@ -1,4 +1,6 @@
-﻿@model SecurityViewModel
+﻿@using Candlewire.Identity.Server.Enums
+
+@model SecurityViewModel
 
 @{ Layout = "/Views/Shared/_Layout.cshtml"; }
 
@@ -63,7 +65,7 @@
             </div>
         </div>
 
-        <div class="card margin-top-xs-20 margin-top-md-50">
+        <div class="card margin-top-xs-20 margin-top-md-50" style="@(Model.LoginMode == LoginMode.External ? "display:none" : "")">
             <div class="card-header">
                 <h3 class="card-title">Password Maintenance</h3>
                 <div class="card-subtitle">We recommend that you change your password periodically.</div>
@@ -83,6 +85,10 @@
                     </div>
                 </a>
             </div>
+        </div>
+
+        <div class="form-hidden" style="display:none;">
+            @Html.HiddenFor(a => a.LoginMode)
         </div>
     </form>
 </div>
