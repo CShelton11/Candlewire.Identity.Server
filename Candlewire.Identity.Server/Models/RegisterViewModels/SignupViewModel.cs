@@ -15,7 +15,7 @@ namespace Candlewire.Identity.Server.Models.RegisterViewModels
         [Display(Name = "Email Address")]
         public String EmailAddress { get; set; }
 
-        [EmailAddress]
+        [Phone]
         [Display(Name = "Phone Number")]
         public String PhoneNumber { get; set; }
 
@@ -32,13 +32,28 @@ namespace Candlewire.Identity.Server.Models.RegisterViewModels
         [DataType(DataType.Date)]
         public DateTime? Birthdate { get; set; }
 
+        [Display(Name = "Street Address")]
         public String ShippingStreet { get; set; }
+
+        [Display(Name = "City")]
         public String ShippingCity { get; set; }
+
+        [Display(Name = "State")]
         public String ShippingState { get; set; }
+
+        [Display(Name = "Zip")]
         public String ShippingZip { get; set; }
+
+        [Display(Name = "Street Address")]
         public String BillingStreet { get; set; }
+
+        [Display(Name = "City")]
         public String BillingCity { get; set; }
+
+        [Display(Name = "State")]
         public String BillingState { get; set; }
+
+        [Display(Name = "Zip")]
         public String BillingZip { get; set; }
 
         [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{9,}$", ErrorMessage = "Passwords must be at least 9 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]

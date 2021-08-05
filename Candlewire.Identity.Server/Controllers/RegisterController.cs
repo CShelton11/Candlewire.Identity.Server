@@ -1,4 +1,5 @@
-﻿using Candlewire.Identity.Server.Entities;
+﻿using Candlewire.Identity.Server.Attributes;
+using Candlewire.Identity.Server.Entities;
 using Candlewire.Identity.Server.Enums;
 using Candlewire.Identity.Server.Extensions;
 using Candlewire.Identity.Server.Interfaces;
@@ -49,8 +50,12 @@ namespace Candlewire.Identity.Server.Controllers
         }
 
         [HttpGet]
+        [RequireParameter(new String[] { "returnUrl", "firstName", "lastName", "nickName", "birthDate", "emailAddress", "phoneNumber", "shippingStreet", "shippingCity", "shippingState", "shippingZip", "billingStreet", "billingCity", "billingState", "billingZip" })]
         public async Task<IActionResult> Signup(String returnUrl, String firstName, String lastName, String nickName, String birthDate, String emailAddress, String phoneNumber, String shippingStreet, String shippingCity, String shippingState, String shippingZip, String billingStreet, String billingCity, String billingState, String billingZip)
         {
+            var result = await ExternalResultAsync();
+            var provider = GetProvider(result);
+
             var firstValue = (firstName ?? "").Trim();
             var lastValue = (lastName ?? "").Trim();
             var nickValue = (nickName ?? "").Trim();
@@ -65,9 +70,13 @@ namespace Candlewire.Identity.Server.Controllers
             var cityValue2 = (billingCity ?? "").Trim();
             var stateValue2 = (billingState ?? "").Trim();
             var zipValue2 = (billingZip ?? "").Trim();
+            var editables = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var visibles = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var required = String.Join(",", _providerManager.GetRequireClaims(provider).ToArray());
 
             var model = new SignupViewModel()
             {
+                ReturnUrl = returnUrl,
                 FirstName = firstValue,
                 LastName = lastValue,
                 Nickname = nickValue,
@@ -81,10 +90,14 @@ namespace Candlewire.Identity.Server.Controllers
                 BillingStreet = streetValue2,
                 BillingCity = cityValue2,
                 BillingState = stateValue2,
-                BillingZip = zipValue2
+                BillingZip = zipValue2,
+                LoginMode = LoginMode.Internal,
+                EditableClaims = editables,
+                RequireClaims = required,
+                VisibleClaims = visibles
             };
 
-            return await Signup(model);
+            return View(model);
         }
 
         [HttpGet]
@@ -127,12 +140,11 @@ namespace Candlewire.Identity.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Signup(SignupViewModel model)
         {
-
             var result = await ExternalResultAsync();
             var mode = model.LoginMode;
             var provider = GetProvider(result);
 
-            if ((result != null && mode == LoginMode.Internal) || (result == null && (mode == LoginMode.External || mode != LoginMode.Mixed)))
+            if ((result != null && mode == LoginMode.Internal) || (result == null && (mode == LoginMode.External || mode == LoginMode.Mixed)))
             {
                 ModelState.AddModelError("", "Unauthorized registration flow detected");
                 return View(model);
