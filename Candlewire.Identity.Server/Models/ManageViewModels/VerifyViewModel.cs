@@ -12,6 +12,9 @@ namespace Candlewire.Identity.Server.Models.ManageViewModels
         [Required]
         public String VerificationType { get; set; }
 
+        [Required]
+        public String VerificationMode { get; set; }
+
         [Display(Name = "Verification Code")]
         public String VerificationCode { get; set; }
         

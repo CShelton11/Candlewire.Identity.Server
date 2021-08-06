@@ -11,6 +11,7 @@ namespace Candlewire.Identity.Server.Models.RegisterViewModels
 {
     public class SignupViewModel: BaseViewModel
     {
+        [Required]
         [EmailAddress]
         [Display(Name = "Email Address")]
         public String EmailAddress { get; set; }

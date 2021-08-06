@@ -99,7 +99,7 @@ namespace Candlewire.Identity.Server.Managers
             }
         }
 
-        public async Task<T> GetAsync<T>(String key)
+        public async Task<T> GetAsync<T>(String key, Boolean? remove = false)
         {
             var persistenceCode = SessionCode;
             var persistenceKey = key;
@@ -110,6 +110,11 @@ namespace Candlewire.Identity.Server.Managers
                 var persistenceItem = await PersistenceContext.PersistenceItems.FirstOrDefaultAsync(a => a.PersistenceToken == persistenceToken && a.PersistenceKey == persistenceKey && a.PersistenceExpiration > persistenceDate);
                 if (persistenceItem != null)
                 {
+                    if (remove == true)
+                    {
+                        PersistenceContext.PersistenceItems.Remove(persistenceItem);
+                        await PersistenceContext.SaveChangesAsync();
+                    }
                     return JsonConvert.DeserializeObject<T>(persistenceItem.PersistenceData.Decrypt());
                 }
                 else
