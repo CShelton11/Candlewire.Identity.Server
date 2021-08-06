@@ -220,15 +220,12 @@ namespace Candlewire.Identity.Server.Controllers
                 var total = (Convert.ToInt32(!String.IsNullOrEmpty(streetValue1)) + Convert.ToInt32(!String.IsNullOrEmpty(cityValue1)) + Convert.ToInt32(!String.IsNullOrEmpty(stateValue1)) + Convert.ToInt32(!String.IsNullOrEmpty(zipValue1)));
                 if (total > 0 && total < 4)
                 {
-                    if (String.IsNullOrEmpty(streetValue1) || String.IsNullOrEmpty(cityValue1) || String.IsNullOrEmpty(stateValue1) || String.IsNullOrEmpty(zipValue1))
-                    {
-                        ModelState.AddModelError("", "All shipping address fields must be provided if an address is being entered");
-                        shippingProvided = false;
-                    }
-                    else
-                    {
-                        shippingProvided = true;
-                    }
+                    ModelState.AddModelError("", "All shipping address fields must be provided if an address is being entered");
+                    shippingProvided = false;
+                }
+                else
+                {
+                    shippingProvided = true;
                 }
             }
 
@@ -251,15 +248,12 @@ namespace Candlewire.Identity.Server.Controllers
                 var total = (Convert.ToInt32(!String.IsNullOrEmpty(streetValue2)) + Convert.ToInt32(!String.IsNullOrEmpty(cityValue2)) + Convert.ToInt32(!String.IsNullOrEmpty(stateValue2)) + Convert.ToInt32(!String.IsNullOrEmpty(zipValue2)));
                 if (total > 0 && total < 4)
                 {
-                    if (String.IsNullOrEmpty(streetValue2) || String.IsNullOrEmpty(cityValue2) || String.IsNullOrEmpty(stateValue2) || String.IsNullOrEmpty(zipValue2))
-                    {
-                        ModelState.AddModelError("", "All billing address fields must be provided if an address is being entered");
-                        billingProvided = false;
-                    }
-                    else
-                    {
-                        billingProvided = true;
-                    }
+                    ModelState.AddModelError("", "All billing address fields must be provided if an address is being entered");
+                    billingProvided = false;
+                }
+                else
+                {
+                    billingProvided = true;
                 }
             }
 
@@ -288,8 +282,8 @@ namespace Candlewire.Identity.Server.Controllers
                 }
             }
 
-            var shippingData = shippingProvided == true ? JsonConvert.SerializeObject(new { Street = streetValue1, City = streetValue1, State = stateValue1, Zip = zipValue1 }) : null;
-            var billingData = billingProvided == true ? JsonConvert.SerializeObject(new { Street = streetValue2, City = streetValue2, State = stateValue2, Zip = zipValue2 }) : null;
+            var shippingData = shippingProvided == true ? JsonConvert.SerializeObject(new { Street = streetValue1, City = cityValue1, State = stateValue1, Zip = zipValue1 }) : null;
+            var billingData = billingProvided == true ? JsonConvert.SerializeObject(new { Street = streetValue2, City = cityValue2, State = stateValue2, Zip = zipValue2 }) : null;
 
             if (ModelState.ErrorCount == 0)
             {
@@ -347,6 +341,7 @@ namespace Candlewire.Identity.Server.Controllers
                 {
                     var registration = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
                     await RegisterUser(registration);
+
                     if (registration.LoginMode == LoginMode.Internal)
                     {
                         return RedirectToLocal(model.ReturnUrl);
@@ -426,6 +421,7 @@ namespace Candlewire.Identity.Server.Controllers
                 {
                     var registration = await _sessionManager.GetAsync<UserRegistrationCache>("UserRegistrationCache");
                     await RegisterUser(registration);
+
                     if (registration.LoginMode == LoginMode.Internal)
                     {
                         return RedirectToLocal(model.ReturnUrl);
@@ -445,13 +441,14 @@ namespace Candlewire.Identity.Server.Controllers
             }
         }
 
-        private async Task RegisterUser(UserRegistrationCache reg)
+        private async Task<ApplicationUser> RegisterUser(UserRegistrationCache reg)
         {
             if (reg.LoginMode == LoginMode.Internal)
             {
                 var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.ShippingAddress, reg.BillingAddress, reg.Password);
                 await _sessionManager.RemoveAsync("Registration");
-                await _signinManager.SignInAsync(user, new AuthenticationProperties { });
+                await _signinManager.PasswordSignInAsync(user, reg.Password, false, false);
+                return user;
             }
             else
             {
@@ -465,6 +462,7 @@ namespace Candlewire.Identity.Server.Controllers
                 var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.ShippingAddress, reg.BillingAddress, providerName, providerKey, reg.Password);
                 await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
                 await _sessionManager.RemoveAsync("Registration");
+                return user;
             }
         }
 
@@ -528,13 +526,13 @@ namespace Candlewire.Identity.Server.Controllers
 
         private IActionResult RedirectToLocal(string returnUrl)
         {
-            if (Url.IsLocalUrl(returnUrl))
+            if (String.IsNullOrEmpty((returnUrl ?? "").Trim()))
             {
-                return Redirect(returnUrl);
+                return RedirectToAction("Index", "Home");
             }
             else
             {
-                return RedirectToAction("Index", "Home");
+                return Redirect(returnUrl);
             }
         }
 
@@ -556,12 +554,15 @@ namespace Candlewire.Identity.Server.Controllers
             {
                 LoginMode = loginMode;
                 EmailAddress = emailAddress;
+                PhoneNumber = phoneNumber;
                 FirstName = firstName;
                 LastName = lastName;
                 Nickname = nickName;
                 Birthdate = birthDate;
                 Password = password;
                 TermsAgreement = false;
+                ShippingAddress = shippingAddress;
+                BillingAddress = billingAddress;
             }
         }
     }

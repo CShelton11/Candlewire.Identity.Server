@@ -49,6 +49,8 @@ namespace Candlewire.Identity.Server.Managers
                 Email = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value,
                 NormalizedEmail = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value.ToUpper(),
                 EmailConfirmed = true,
+                PhoneNumber = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.PhoneNumber)?.Value,
+                PhoneNumberConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user);

@@ -7,7 +7,7 @@
         @if (Model.EnableLocalLogin)
         {
             <div class="col-xs-6 col-md-6">
-                <div class="card">
+                <div class="card" style="min-height:380px;">
                     <div class="card-header">
                         <h3 class="card-title">Candlewire Login</h3>
                         <div class="card-subtitle">Login using your username and password</div>
@@ -50,26 +50,29 @@
         @if (Model.VisibleExternalProviders.Any())
         {
             <div class="col-xs-6 col-md-6 external-providers">
-                <div class="card">
+                <div class="card" style="min-height:380px;">
                     <div class="card-header">
                         <h3 class="card-title">3rd Party Login</h3>
-                        <div class="card-subtitle">Login using Google or Facebook</div>
+                        <div class="card-subtitle">Login using a 3rd party provider</div>
                     </div>
                     <div class="card-body">
                         <form asp-route="Account">
                             <div class="row">
-                                <div class="card-body">
-                                    <div class="row">
-                                        @foreach (var provider in Model.ExternalProviders)
-                                        {
-                                            <div class="col-12 col-md-6" style="padding-left:10px;padding-right:0px;">
-                                                <a class="btn btn-outline-secondary col-md-12" asp-action="ExternalLogin" asp-route-provider="@provider.AuthenticationScheme" asp-route-returnUrl="@Model.ReturnUrl">
-                                                    <div class="btn-oauth btn-image @("btn-image-icon-" + provider.AuthenticationScheme.ToLower())"><span class="test">Login with @provider.AuthenticationScheme</span></div>
-                                                </a>
+                                @foreach (var provider in Model.ExternalProviders)
+                                {
+                                    <div class="col-12 col-md-6">
+                                        <a class="btn col-md-12 no-gutters" asp-action="ExternalLogin" asp-route-provider="@provider.AuthenticationScheme" asp-route-returnUrl="@Model.ReturnUrl">
+                                            <div class="d-block d-md-none">
+                                                <div class="btn-oauth btn-image @("btn-image-icon-" + provider.AuthenticationScheme.ToLower())"><span>Login with @provider.AuthenticationScheme</span></div>
                                             </div>
-                                        }
+                                            <div class="d-none d-md-block">
+                                                <div class="row" style="padding-left:5px;padding-right:5px;overflow:hidden;text-wrap:none;white-space:nowrap">
+                                                    <div class="btn-oauth btn-image @("btn-image-icon-" + provider.AuthenticationScheme.ToLower())"><span>Login with @provider.AuthenticationScheme</span></div>
+                                                </div>
+                                            </div>
+                                        </a>
                                     </div>
-                                </div>
+                                }
                             </div>
                         </form>
                     </div>

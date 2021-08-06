@@ -614,8 +614,6 @@ namespace Candlewire.Identity.ServerControllers
             var additionalLocalClaims = new List<Claim>();
             var localSignInProps = new AuthenticationProperties();
             ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
-            ProcessLoginCallbackForWsFed(result, additionalLocalClaims, localSignInProps);
-            ProcessLoginCallbackForSaml2p(result, additionalLocalClaims, localSignInProps);
 
             // issue authentication cookie for user
             // we must issue the cookie maually, and can't use the SignInManager because
@@ -789,15 +787,6 @@ namespace Candlewire.Identity.ServerControllers
             }
         }
 
-        private void ProcessLoginCallbackForWsFed(AuthenticateResult externalResult, List<Claim> localClaims, AuthenticationProperties localSignInProps)
-        {
-        }
-
-        private void ProcessLoginCallbackForSaml2p(AuthenticateResult externalResult, List<Claim> localClaims, AuthenticationProperties localSignInProps)
-        {
-        }
-
-        #region Helpers
 
         private void AddErrors(IdentityResult result)
         {
@@ -814,17 +803,14 @@ namespace Candlewire.Identity.ServerControllers
 
         private IActionResult RedirectToLocal(string returnUrl)
         {
-            if (Url.IsLocalUrl(returnUrl))
+            if (String.IsNullOrEmpty((returnUrl ?? "").Trim()))
             {
-                return Redirect(returnUrl);
+                return RedirectToAction("Index", "Home");
             }
             else
             {
-                return RedirectToAction(nameof(HomeController.Index), "Home");
+                return Redirect(returnUrl);
             }
         }
-
-        #endregion
-
     }
 }

@@ -70,6 +70,17 @@ namespace Candlewire.Identity.ServerControllers
         }
 
         // ************************************************
+        // Update actions (Upcoming section - Will be used for accepting updates from other systems and return json information)
+        // By doing so, other applications can attempt to update information without having to navigate directly to the identity server
+        // Ideally, this is accomplished through microservices, but this just provides another approach
+        // Will include update actions for each type of claim
+        // ************************************************
+
+
+
+
+
+        // ************************************************
         // Profile actions
         // ************************************************
 
