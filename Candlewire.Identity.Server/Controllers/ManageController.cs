@@ -291,6 +291,16 @@ namespace Candlewire.Identity.ServerControllers
                     return model;
                 }
 
+                if (user.Email != model.EmailAddress)
+                {
+                    var entity = await _userManager.FindByEmailAsync(model.EmailAddress);
+                    if (entity != null)
+                    {
+                        ModelState.AddModelError("", "Another account is already associated with this email address");
+                        return model;
+                    }
+                }
+
                 return model;
             }
             catch (Exception)
@@ -959,7 +969,7 @@ namespace Candlewire.Identity.ServerControllers
                     var total = (Convert.ToInt32(!String.IsNullOrEmpty(street)) + Convert.ToInt32(!String.IsNullOrEmpty(city)) + Convert.ToInt32(!String.IsNullOrEmpty(state)) + Convert.ToInt32(!String.IsNullOrEmpty(zip)));
                     if (total > 0 && total < 4)
                     {
-                        ModelState.AddModelError("", "All address fields must are required when an address is being provided");
+                        ModelState.AddModelError("", "All address fields are required when an address is being provided");
                         return model;
                     }
                 }
@@ -1343,30 +1353,6 @@ namespace Candlewire.Identity.ServerControllers
                 return RedirectToAction("Profile");
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
 
         // ************************************************
         // Two factor authentication actions

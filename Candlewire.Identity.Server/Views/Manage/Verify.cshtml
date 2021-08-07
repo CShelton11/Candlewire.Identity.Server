@@ -27,6 +27,7 @@
                     <input type="text" class="hidden-field" asp-for="VerificationEmail" />
                     <input type="text" class="hidden-field" asp-for="VerificationPhone" />
                     <input type="text" class="hidden-field" asp-for="VerificationType" />
+                    <input type="text" class="hidden-field" asp-for="VerificationMode" />
 
                     @if (@Model.VerificationType.ToLower() == "email")
                     {
