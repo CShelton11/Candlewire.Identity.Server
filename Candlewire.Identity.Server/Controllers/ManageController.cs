@@ -73,28 +73,11 @@ namespace Candlewire.Identity.ServerControllers
         // ************************************************
         // Profile actions
         // ************************************************
-
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
             var model = await BuildProfileViewModel();
             return View(model);
-        }
-
-        [HttpGet]
-        [RequireParameter(new String[] { "toastTitle", "toastLevel", "toastData" })]
-        public async Task<IActionResult> Profile(String toastTitle, String toastLevel, String toastData)
-        {
-            var model = await BuildProfileViewModel();
-
-            var toastBytes = Convert.FromBase64String(toastData);
-            var toastJson = System.Text.Encoding.UTF8.GetString(toastBytes);
-            var toastArray = JsonConvert.DeserializeObject<List<String>>(toastJson);
-
-            model.ToastTitle = toastTitle;
-            model.ToastMessages = toastArray;
-            model.ToastLevel = toastLevel;
-            return View("Profile", model);
         }
 
         private async Task<ProfileViewModel> BuildProfileViewModel()
@@ -145,7 +128,6 @@ namespace Candlewire.Identity.ServerControllers
         // ************************************************
         // Security actions
         // ************************************************
-
         [HttpGet]
         public async Task<IActionResult> Security()
         {
@@ -153,38 +135,21 @@ namespace Candlewire.Identity.ServerControllers
             return View(model);
         }
 
-        [HttpGet]
-        [RequireParameter(new String[] { "toastTitle", "toastLevel", "toastData" })]
-        public async Task<IActionResult> Security(String toastTitle, String toastLevel, String toastData)
-        {
-            var model = await BuildSecurityViewModel();
-
-            var toastBytes = Convert.FromBase64String(toastData);
-            var toastJson = System.Text.Encoding.UTF8.GetString(toastBytes);
-            var toastArray = JsonConvert.DeserializeObject<List<String>>(toastJson);
-
-            model.ToastTitle = toastTitle;
-            model.ToastMessages = toastArray;
-            model.ToastLevel = toastLevel;
-
-            return View("Security", model);
-        }
-
         private async Task<SecurityViewModel> BuildSecurityViewModel()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-            }
-
+            var toast = await _sessionManager.GetAsync<SecurityToastCache>("SecurityToastCache", true);
+            
             var model = new SecurityViewModel
             {
                 EmailAddress = user.Email,
                 EmailConfirmed = user.EmailConfirmed,
                 PhoneNumber = user.PhoneNumber,
                 PhoneConfirmed = user.PhoneNumberConfirmed,
-                TwoFactorEnabled = user.TwoFactorEnabled
+                TwoFactorEnabled = user.TwoFactorEnabled,
+                ToastTitle = toast == null ? "" : toast.ToastTitle,
+                ToastMessages = toast == null ? new List<String>() : toast.ToastMessages,
+                ToastLevel = toast == null ? "" : toast.ToastLevel
             };
 
             return model;
@@ -1169,9 +1134,9 @@ namespace Candlewire.Identity.ServerControllers
                 var succeeded = passed == false ? false : await SavePasswordViewModel(user, result);
                 if (succeeded)
                 {
-                    var cache = new ProfileToastCache("Password Updated Successfully", "Your password has been successfully updated", "success");
-                    await _sessionManager.AddAsync("ProfileToastCache", cache, DateTime.UtcNow.AddMinutes(1));
-                    return RedirectToAction("Profile");
+                    var cache = new SecurityToastCache("Password Updated Successfully", "Your password has been successfully updated", "success");
+                    await _sessionManager.AddAsync("SecurityToastCache", cache, DateTime.UtcNow.AddMinutes(1));
+                    return RedirectToAction("Security");
                 }
                 else
                 {
@@ -1451,6 +1416,22 @@ namespace Candlewire.Identity.ServerControllers
             public String ToastTitle { get; set; }
             public List<String> ToastMessages { get; set; }
             public String ToastLevel { get; set; }
+
+            public SecurityToastCache() { }
+
+            public SecurityToastCache(String toastTitle, String toastMessage, String toastLevel)
+            {
+                ToastTitle = toastTitle ?? "";
+                ToastMessages = String.IsNullOrEmpty(toastMessage) ? new List<String>() : (new String[] { toastMessage }).ToList();
+                ToastLevel = toastLevel ?? "";
+            }
+
+            public SecurityToastCache(String toastTitle, List<String> toastMessages, String toastLevel)
+            {
+                ToastTitle = toastTitle ?? "";
+                ToastMessages = toastMessages ?? new List<String>();
+                ToastLevel = toastLevel ?? "";
+            }
         }
 
         public class ClaimVerificationCache

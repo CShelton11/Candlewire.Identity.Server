@@ -402,7 +402,6 @@ namespace Candlewire.Identity.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Verify(VerifyViewModel model)
         {
-            System.Threading.Thread.Sleep(2000);
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -433,9 +432,7 @@ namespace Candlewire.Identity.Server.Controllers
                 }
                 else
                 {
-                    model.ToastTitle = "Verification Failed";
-                    model.ToastMessages = new List<String>((new String[] { "Unable to verify the email address.", "Please try again." }));
-                    model.ToastLevel = "failure";
+                    ModelState.AddModelError("", "Unable to verify your email address using the provided code");
                     return View("Verify", model);
                 }
             }
