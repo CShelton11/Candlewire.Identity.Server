@@ -36,7 +36,17 @@ namespace Candlewire.Identity.Server.Controllers
         private readonly IEmailSender _emailSender;
         private readonly TermSettings _termSettings;
 
-        public RegisterController(SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager, AccountManager accountManager, SessionManager sessionManager, TokenManager tokenManager, ClaimManager claimManager, IEmailSender emailSender, IOptions<TermSettings> termSettings, ProviderManager providerManager)
+        public RegisterController(
+            SignInManager<ApplicationUser> signinManager, 
+            UserManager<ApplicationUser> userManager, 
+            AccountManager accountManager, 
+            SessionManager sessionManager, 
+            TokenManager tokenManager, 
+            ClaimManager claimManager, 
+            IEmailSender emailSender, 
+            IOptions<TermSettings> termSettings, 
+            ProviderManager providerManager
+        )
         {
             _signinManager = signinManager;
             _userManager = userManager;
@@ -100,6 +110,9 @@ namespace Candlewire.Identity.Server.Controllers
             return View(model);
         }
 
+        // ************************************************
+        // Signup actions
+        // ************************************************
         [HttpGet]
         public async Task<IActionResult> Signup(String returnUrl)
         {
