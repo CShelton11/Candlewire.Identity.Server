@@ -26,7 +26,7 @@ namespace Candlewire.Identity.Server.Managers
             return await query.ToListAsync();
         }
 
-        public async Task<List<IdentityRole>> GetRoles(String providerName, String domainName, List<String> domainRoles)
+        public async Task<List<ApplicationRole>> GetRoles(String providerName, String domainName, List<String> domainRoles)
         {
             var query = from a in _context.RoleMaps
                         join b in _context.Roles on a.RoleId equals b.Id
