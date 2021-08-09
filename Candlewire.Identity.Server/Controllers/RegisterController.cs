@@ -37,14 +37,14 @@ namespace Candlewire.Identity.Server.Controllers
         private readonly TermSettings _termSettings;
 
         public RegisterController(
-            SignInManager<ApplicationUser> signinManager, 
-            UserManager<ApplicationUser> userManager, 
-            AccountManager accountManager, 
-            SessionManager sessionManager, 
-            TokenManager tokenManager, 
-            ClaimManager claimManager, 
-            IEmailSender emailSender, 
-            IOptions<TermSettings> termSettings, 
+            SignInManager<ApplicationUser> signinManager,
+            UserManager<ApplicationUser> userManager,
+            AccountManager accountManager,
+            SessionManager sessionManager,
+            TokenManager tokenManager,
+            ClaimManager claimManager,
+            IEmailSender emailSender,
+            IOptions<TermSettings> termSettings,
             ProviderManager providerManager
         )
         {
@@ -81,7 +81,7 @@ namespace Candlewire.Identity.Server.Controllers
             var stateValue2 = (billingState ?? "").Trim();
             var zipValue2 = (billingZip ?? "").Trim();
             var editables = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
-            var visibles = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var visibles = String.Join(",", _providerManager.GetVisibleClaims(provider).ToArray());
             var required = String.Join(",", _providerManager.GetRequireClaims(provider).ToArray());
 
             var model = new SignupViewModel()
@@ -120,9 +120,9 @@ namespace Candlewire.Identity.Server.Controllers
             var provider = GetProvider(result);
             var mode = _providerManager.GetLoginMode(provider);
             var model = new SignupViewModel() { ReturnUrl = returnUrl, LoginMode = mode };
-            
+
             var editables = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
-            var visibles = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var visibles = String.Join(",", _providerManager.GetVisibleClaims(provider).ToArray());
             var required = String.Join(",", _providerManager.GetRequireClaims(provider).ToArray());
 
             if (mode == Enums.LoginMode.External || mode == Enums.LoginMode.Mixed)
@@ -300,9 +300,18 @@ namespace Candlewire.Identity.Server.Controllers
 
             if (ModelState.ErrorCount == 0)
             {
-                var reg = new UserRegistrationCache(mode, emailValue, phoneValue, firstValue, lastValue, nickValue, birthValue, shippingData, billingData, model.Password);
-                await _sessionManager.AddAsync("UserRegistrationCache", reg, DateTime.UtcNow.AddMinutes(30));
-                return RedirectToAction("Terms", new { emailAddress = model.EmailAddress, returnUrl = model.ReturnUrl });
+                if (mode == LoginMode.External)
+                {
+                    var reg = new UserRegistrationCache(mode, emailValue, phoneValue, firstValue, lastValue, nickValue, birthValue, shippingData, billingData, model.Password);
+                    var user = await RegisterUser(reg);
+                    return RedirectToAction("ExternalLoginCallback", "Account", new { ReturnUrl = model.ReturnUrl });
+                }
+                else
+                {
+                    var reg = new UserRegistrationCache(mode, emailValue, phoneValue, firstValue, lastValue, nickValue, birthValue, shippingData, billingData, model.Password);
+                    await _sessionManager.AddAsync("UserRegistrationCache", reg, DateTime.UtcNow.AddMinutes(30));
+                    return RedirectToAction("Terms", new { emailAddress = model.EmailAddress, returnUrl = model.ReturnUrl });
+                }
             }
 
             model.Password = "";
@@ -455,7 +464,8 @@ namespace Candlewire.Identity.Server.Controllers
         {
             if (reg.LoginMode == LoginMode.Internal)
             {
-                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.ShippingAddress, reg.BillingAddress, reg.Password);
+                var terms = reg.TermsAgreement == false ? null : _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", "");
+                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, terms, reg.ShippingAddress, reg.BillingAddress, reg.Password);
                 await _sessionManager.RemoveAsync("Registration");
                 await _signinManager.PasswordSignInAsync(user, reg.Password, false, false);
                 return user;
@@ -469,7 +479,8 @@ namespace Candlewire.Identity.Server.Controllers
                 var providerKey = GetProviderKey(result);
                 var domainName = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
 
-                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", ""), reg.ShippingAddress, reg.BillingAddress, providerName, providerKey, reg.Password);
+                var terms = reg.TermsAgreement == false ? null : _termSettings.Path.Split(("\\").ToCharArray()).Last().ToString().Replace(".txt", "");
+                var user = await _accountManager.AutoCreateUserAsync(reg.EmailAddress, reg.PhoneNumber, reg.FirstName, reg.LastName, reg.Nickname, reg.Birthdate, terms, reg.ShippingAddress, reg.BillingAddress, providerName, providerKey, reg.Password);
                 await _accountManager.AutoAssignRolesAsync(user, providerName, domainName, roles);
                 await _sessionManager.RemoveAsync("Registration");
                 return user;

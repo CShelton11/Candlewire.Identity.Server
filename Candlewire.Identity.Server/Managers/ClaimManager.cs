@@ -30,7 +30,7 @@ namespace Candlewire.Identity.Server.Managers
             var nickName = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.NickName)?.Value;
             var upnValue = claims.FirstOrDefault(a => a.Type == ClaimTypes.Upn)?.Value;
 
-            if (fullName?.Contains("/") == false && fullName?.Contains(" ") == true)
+            if (fullName?.Contains("\\") == false && fullName?.Contains(" ") == true && firstName == null && lastName == null)
             {
                 var array = fullName?.Split(" ");
                 if (firstName == null && array?.Length > 1) { firstName = array[0]; }

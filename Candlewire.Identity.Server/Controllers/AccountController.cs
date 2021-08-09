@@ -659,6 +659,7 @@ namespace Candlewire.Identity.ServerControllers
             var domain = (claims.FirstOrDefault(a => a.Type == JwtClaimTypes.Email)?.Value ?? "").GetDomainName();
             var authorized = _providerManager.HasAuthorizedDomain(provider, domain);
             var restricted = _providerManager.HasRestrictedDomain(provider, domain);
+            var requirements = _providerManager.GetRequireClaims(provider);
             var mode = _providerManager.GetLoginMode(provider);
 
             if (authorized == false)
@@ -685,9 +686,21 @@ namespace Candlewire.Identity.ServerControllers
                     var nickName = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.NickName)?.Value;
                     var birthDate = claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate) == null ? null : (DateTime?)Convert.ToDateTime(claims.FirstOrDefault(a => a.Type == JwtClaimTypes.BirthDate)?.Value);
 
-                    user = await _accountManager.AutoCreateUserAsync(emailAddress, phoneNumber, firstName, lastName, nickName, birthDate, null, null, null, provider, userId.Value);
-                    await _accountManager.AutoAssignRolesAsync(user, provider, domain, roles);
-                    return await ExternalLoginProcess(result, url);
+                    var query = from a in requirements
+                                join b in claims on a.ToLower() equals b.Type.ToLower() into temp
+                                from c in temp.DefaultIfEmpty()
+                                select new { Requirement = a, Claim = c };
+
+                    if (query.Any(a => a.Claim == null))
+                    {
+                        return RedirectToAction("Signup", "Register", new { returnUrl = url });
+                    }
+                    else
+                    {
+                        user = await _accountManager.AutoCreateUserAsync(emailAddress, phoneNumber, firstName, lastName, nickName, birthDate, null, null, null, provider, userId.Value);
+                        await _accountManager.AutoAssignRolesAsync(user, provider, domain, roles);
+                        return await ExternalLoginProcess(result, url);
+                    }
                 }
                 else
                 {

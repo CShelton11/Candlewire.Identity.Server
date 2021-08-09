@@ -31,38 +31,80 @@
                                 <div class="row">
                                     <div class="form-group col-md-6" style="@(visibleClaims.Contains("given_name") && editableClaims.Contains("given_name") ? "" : "display:none")">
                                         <label asp-for="FirstName"></label>
-                                        @Html.EditorFor(a => a.FirstName, new { htmlAttributes = new { @class = "form-control" } })
+                                        @if (editableClaims.Contains("given_name"))
+                                        {
+                                            <input asp-for="FirstName" class="form-control" /> 
+                                        }
+                                        else
+                                        {
+                                            <input asp-for="FirstName" readonly="readonly" class="form-control" />
+                                        }
                                     </div>
                                     <div class="form-group col-md-6" style="@(visibleClaims.Contains("family_name") && editableClaims.Contains("family_name") ? "" : "display:none")">
                                         <label asp-for="LastName"></label>
-                                        @Html.EditorFor(a => a.LastName, new { htmlAttributes = new { @class = "form-control" } })
+                                        @if (editableClaims.Contains("family_name"))
+                                        {
+                                            <input asp-for="LastName" class="form-control" /> 
+                                        }
+                                        else
+                                        {
+                                            <input asp-for="LastName" readonly="readonly" class="form-control" />
+                                        }
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="form-group col-md-6" style="@(visibleClaims.Contains("nickname") && editableClaims.Contains("nickname") ? "" : "display:none")">
                                         <label asp-for="Nickname"></label>
-                                        @Html.EditorFor(a => a.Nickname, new { htmlAttributes = new { @class = "form-control" } })
+                                        @if (editableClaims.Contains("nickname"))
+                                        {
+                                            <input asp-for="Nickname" class="form-control" /> 
+                                        }
+                                        else
+                                        {
+                                            <input asp-for="Nickname" readonly="readonly" class="form-control" />
+                                        }
                                     </div>
                                     <div class="form-group col-md-6" style="@(visibleClaims.Contains("birthdate") && editableClaims.Contains("birthdate") ? "" : "display:none")">
                                         <label>
                                             <label asp-for="Birthdate"></label>
-                                            <input asp-for="Birthdate" type="text" class="birth-date-field form-control" />
+                                            @if (editableClaims.Contains("birthdate"))
+                                            {
+                                                <input asp-for="Birthdate" class="birth-date-field form-control" /> 
+                                            }
+                                            else
+                                            {
+                                                <input asp-for="Birthdate" readonly="readonly" class="birth-date-field form-control" />
+                                            }
                                         </label>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6" style="@(visibleClaims.Contains("email") && editableClaims.Contains("email") ? "" : "display:none")">
+                            <div class="col-md-6" style="@(visibleClaims.Contains("email") || (visibleClaims.Contains("phone_number")) ? "" : "display:none")">
                                 <h5>Contact Info</h5>
-                                <div class="row">
+                                <div class="row" style="@((visibleClaims.Contains("email")) ? "" : "display:none")">
                                     <div class="form-group col-md-8">
                                         <label asp-for="EmailAddress"></label>
-                                        <input asp-for="EmailAddress" class="email-address-field form-control" />
+                                        @if (editableClaims.Contains("email"))
+                                        {
+                                            <input asp-for="EmailAddress" class="form-control" /> 
+                                        }
+                                        else
+                                        {
+                                            <input asp-for="EmailAddress" readonly="readonly" class="form-control" />
+                                        }
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row" style="@((visibleClaims.Contains("phone_number")) ? "" : "display:none")">
                                     <div class="form-group col-md-6">
                                         <label asp-for="PhoneNumber"></label>
-                                        <input asp-for="PhoneNumber" class="phone-number-field form-control" />
+                                        @if (editableClaims.Contains("phone_number"))
+                                        {
+                                            <input asp-for="PhoneNumber" class="form-control" /> 
+                                        }
+                                        else
+                                        {
+                                            <input asp-for="PhoneNumber" readonly="readonly" class="form-control" />
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -73,81 +115,155 @@
                                         <div class="row">
                                             <div class="form-group col-12">
                                                 <label asp-for="ShippingStreet"></label>
-                                                <input asp-for="ShippingStreet" class="form-control" />
+                                                @if (editableClaims.Contains("shipping_address"))
+                                                {
+                                                    <input asp-for="ShippingStreet" class="form-control" /> 
+                                                }
+                                                else
+                                                {
+                                                    <input asp-for="ShippingStreet" readonly="readonly" class="form-control" />
+                                                }
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="form-group col-12 col-md-5">
                                                 <label asp-for="ShippingCity"></label>
-                                                <input asp-for="ShippingCity" class="form-control" />
+                                                @if (editableClaims.Contains("shipping_address"))
+                                                {
+                                                    <input asp-for="ShippingCity" class="form-control" />
+                                                }
+                                                else
+                                                {
+                                                    <input asp-for="ShippingCity" readonly="readonly" class="form-control" />
+                                                }
                                             </div>
                                             <div class="form-group col-12 col-md-4">
                                                 <label asp-for="ShippingState"></label>
-                                                @Html.DropDownListFor(a => a.ShippingState,
-                                                    new SelectList(new List<SelectListItem>() {
-                                                        new SelectListItem() { Text="", Value=""},
-                                                        new SelectListItem() { Text="Alabama", Value="AL"},
-                                                        new SelectListItem() { Text="Alaska", Value="AK"},
-                                                        new SelectListItem() { Text="Arizona", Value="AZ"},
-                                                        new SelectListItem() { Text="Arkansas", Value="AR"},
-                                                        new SelectListItem() { Text="California", Value="CA"},
-                                                        new SelectListItem() { Text="Colorado", Value="CO"},
-                                                        new SelectListItem() { Text="Connecticut", Value="CT"},
-                                                        new SelectListItem() { Text="District of Columbia", Value="DC"},
-                                                        new SelectListItem() { Text="Delaware", Value="DE"},
-                                                        new SelectListItem() { Text="Florida", Value="FL"},
-                                                        new SelectListItem() { Text="Georgia", Value="GA"},
-                                                        new SelectListItem() { Text="Hawaii", Value="HI"},
-                                                        new SelectListItem() { Text="Idaho", Value="ID"},
-                                                        new SelectListItem() { Text="Illinois", Value="IL"},
-                                                        new SelectListItem() { Text="Indiana", Value="IN"},
-                                                        new SelectListItem() { Text="Iowa", Value="IA"},
-                                                        new SelectListItem() { Text="Kansas", Value="KS"},
-                                                        new SelectListItem() { Text="Kentucky", Value="KY"},
-                                                        new SelectListItem() { Text="Louisiana", Value="LA"},
-                                                        new SelectListItem() { Text="Maine", Value="ME"},
-                                                        new SelectListItem() { Text="Maryland", Value="MD"},
-                                                        new SelectListItem() { Text="Massachusetts", Value="MA"},
-                                                        new SelectListItem() { Text="Michigan", Value="MI"},
-                                                        new SelectListItem() { Text="Minnesota", Value="MN"},
-                                                        new SelectListItem() { Text="Mississippi", Value="MS"},
-                                                        new SelectListItem() { Text="Missouri", Value="MO"},
-                                                        new SelectListItem() { Text="Montana", Value="MT"},
-                                                        new SelectListItem() { Text="Nebraska", Value="NE"},
-                                                        new SelectListItem() { Text="Nevada", Value="NV"},
-                                                        new SelectListItem() { Text="New Hampshire", Value="NH"},
-                                                        new SelectListItem() { Text="New Jersey", Value="NJ"},
-                                                        new SelectListItem() { Text="New Mexico", Value="NM"},
-                                                        new SelectListItem() { Text="New York", Value="NY"},
-                                                        new SelectListItem() { Text="North Carolina", Value="NC"},
-                                                        new SelectListItem() { Text="North Dakota", Value="ND"},
-                                                        new SelectListItem() { Text="Ohio", Value="OH"},
-                                                        new SelectListItem() { Text="Oklahoma", Value="OK"},
-                                                        new SelectListItem() { Text="Oregon", Value="OR"},
-                                                        new SelectListItem() { Text="Pennsylvania", Value="PA"},
-                                                        new SelectListItem() { Text="Rhode Island", Value="RI"},
-                                                        new SelectListItem() { Text="South Carolina", Value="SC"},
-                                                        new SelectListItem() { Text="South Dakota", Value="SD"},
-                                                        new SelectListItem() { Text="Tennessee", Value="TN"},
-                                                        new SelectListItem() { Text="Texas", Value="TX"},
-                                                        new SelectListItem() { Text="Utah", Value="UT"},
-                                                        new SelectListItem() { Text="Vermont", Value="VT"},
-                                                        new SelectListItem() { Text="Virginia", Value="VA"},
-                                                        new SelectListItem() { Text="Washington", Value="WA"},
-                                                        new SelectListItem() { Text="West Virginia", Value="WV"},
-                                                        new SelectListItem() { Text="Wisconsin", Value="WI"},
-                                                        new SelectListItem() { Text="Wyoming", Value="WY"}
-                                                    },
-                                                    "Value",
-                                                    "Text"
-                                                    ),
-                                                    null,
-                                                    new { @class = "form-control" }
-                                                )
+                                                @if (editableClaims.Contains("shipping_address"))
+                                                {
+                                                    <select asp-for="ShippingState" class="form-control">
+                                                        <option value=""></option>
+                                                        <option value="AL">Alabama</option>
+                                                        <option value="AK">Alaska</option>
+                                                        <option value="AZ">Arizona</option>
+                                                        <option value="AR">Arkansas</option>
+                                                        <option value="CA">California</option>
+                                                        <option value="CO">Colorado</option>
+                                                        <option value="CT">Connecticut</option>
+                                                        <option value="DC">District of Columbia</option>
+                                                        <option value="DE">Delaware</option>
+                                                        <option value="FL">Florida</option>
+                                                        <option value="GA">Georgia</option>
+                                                        <option value="HI">Hawaii</option>
+                                                        <option value="ID">Idaho</option>
+                                                        <option value="IL">Illinois</option>
+                                                        <option value="IN">Indiana</option>
+                                                        <option value="IA">Iowa</option>
+                                                        <option value="KS">Kansas</option>
+                                                        <option value="KY">Kentucky</option>
+                                                        <option value="LA">Louisiana</option>
+                                                        <option value="ME">Maine</option>
+                                                        <option value="MD">Maryland</option>
+                                                        <option value="MA">Massachusetts</option>
+                                                        <option value="MI">Michigan</option>
+                                                        <option value="MN">Minnesota</option>
+                                                        <option value="MS">Mississippi</option>
+                                                        <option value="MO">Missouri</option>
+                                                        <option value="MT">Montana</option>
+                                                        <option value="NE">Nebraska</option>
+                                                        <option value="NV">Nevada</option>
+                                                        <option value="NH">New Hampshire</option>
+                                                        <option value="NJ">New Jersey</option>
+                                                        <option value="NM">New Mexico</option>
+                                                        <option value="NY">New York</option>
+                                                        <option value="NC">North Carolina</option>
+                                                        <option value="ND">North Dakota</option>
+                                                        <option value="OH">Ohio</option>
+                                                        <option value="OK">Oklahoma</option>
+                                                        <option value="OR">Oregon</option>
+                                                        <option value="PA">Pennsylvania</option>
+                                                        <option value="RI">Rhode Island</option>
+                                                        <option value="SC">South Carolina</option>
+                                                        <option value="SD">South Dakota</option>
+                                                        <option value="TN">Tennessee</option>
+                                                        <option value="TX">Texas</option>
+                                                        <option value="UT">Utah</option>
+                                                        <option value="VT">Vermont</option>
+                                                        <option value="VA">Virginia</option>
+                                                        <option value="WA">Washington</option>
+                                                        <option value="WV">West Virginia</option>
+                                                        <option value="WI">Wisconsin</option>
+                                                        <option value="WY">Wyoming</option>
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    <select asp-for="ShippingState" readonly="readonly" class="form-control">
+                                                        <option value=""></option>
+                                                        <option value="AL">Alabama</option>
+                                                        <option value="AK">Alaska</option>
+                                                        <option value="AZ">Arizona</option>
+                                                        <option value="AR">Arkansas</option>
+                                                        <option value="CA">California</option>
+                                                        <option value="CO">Colorado</option>
+                                                        <option value="CT">Connecticut</option>
+                                                        <option value="DC">District of Columbia</option>
+                                                        <option value="DE">Delaware</option>
+                                                        <option value="FL">Florida</option>
+                                                        <option value="GA">Georgia</option>
+                                                        <option value="HI">Hawaii</option>
+                                                        <option value="ID">Idaho</option>
+                                                        <option value="IL">Illinois</option>
+                                                        <option value="IN">Indiana</option>
+                                                        <option value="IA">Iowa</option>
+                                                        <option value="KS">Kansas</option>
+                                                        <option value="KY">Kentucky</option>
+                                                        <option value="LA">Louisiana</option>
+                                                        <option value="ME">Maine</option>
+                                                        <option value="MD">Maryland</option>
+                                                        <option value="MA">Massachusetts</option>
+                                                        <option value="MI">Michigan</option>
+                                                        <option value="MN">Minnesota</option>
+                                                        <option value="MS">Mississippi</option>
+                                                        <option value="MO">Missouri</option>
+                                                        <option value="MT">Montana</option>
+                                                        <option value="NE">Nebraska</option>
+                                                        <option value="NV">Nevada</option>
+                                                        <option value="NH">New Hampshire</option>
+                                                        <option value="NJ">New Jersey</option>
+                                                        <option value="NM">New Mexico</option>
+                                                        <option value="NY">New York</option>
+                                                        <option value="NC">North Carolina</option>
+                                                        <option value="ND">North Dakota</option>
+                                                        <option value="OH">Ohio</option>
+                                                        <option value="OK">Oklahoma</option>
+                                                        <option value="OR">Oregon</option>
+                                                        <option value="PA">Pennsylvania</option>
+                                                        <option value="RI">Rhode Island</option>
+                                                        <option value="SC">South Carolina</option>
+                                                        <option value="SD">South Dakota</option>
+                                                        <option value="TN">Tennessee</option>
+                                                        <option value="TX">Texas</option>
+                                                        <option value="UT">Utah</option>
+                                                        <option value="VT">Vermont</option>
+                                                        <option value="VA">Virginia</option>
+                                                        <option value="WA">Washington</option>
+                                                        <option value="WV">West Virginia</option>
+                                                        <option value="WI">Wisconsin</option>
+                                                        <option value="WY">Wyoming</option>
+                                                    </select>
+                                                }
                                             </div>
                                             <div class="form-group col-12 col-md-3">
                                                 <label asp-for="ShippingZip"></label>
-                                                <input asp-for="ShippingZip" class="form-control" />
+                                                @if (editableClaims.Contains("shipping_address"))
+                                                {
+                                                    <input asp-for="ShippingZip" class="form-control" /> 
+                                                }
+                                                else
+                                                {
+                                                    <input asp-for="ShippingZip" readonly="readonly" class="form-control" />
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -160,81 +276,155 @@
                                         <div class="row">
                                             <div class="form-group col-12">
                                                 <label asp-for="BillingStreet"></label>
-                                                <input asp-for="BillingStreet" class="form-control" />
+                                                @if (editableClaims.Contains("billing_address"))
+                                                {
+                                                    <input asp-for="BillingStreet" class="form-control" /> 
+                                                }
+                                                else
+                                                {
+                                                    <input asp-for="BillingStreet" readonly="readonly" class="form-control" />
+                                                }
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="form-group col-12 col-md-5">
                                                 <label asp-for="BillingCity"></label>
-                                                <input asp-for="BillingCity" class="form-control" />
+                                                @if (editableClaims.Contains("billing_address"))
+                                                {
+                                                    <input asp-for="BillingCity" class="form-control" /> 
+                                                }
+                                                else
+                                                {
+                                                    <input asp-for="BillingCity" readonly="readonly" class="form-control" />
+                                                }
                                             </div>
                                             <div class="form-group col-12 col-md-4">
                                                 <label asp-for="BillingState"></label>
-                                                @Html.DropDownListFor(a => a.BillingState,
-                                                    new SelectList(new List<SelectListItem>() {
-                                                        new SelectListItem() { Text="", Value=""},
-                                                        new SelectListItem() { Text="Alabama", Value="AL"},
-                                                        new SelectListItem() { Text="Alaska", Value="AK"},
-                                                        new SelectListItem() { Text="Arizona", Value="AZ"},
-                                                        new SelectListItem() { Text="Arkansas", Value="AR"},
-                                                        new SelectListItem() { Text="California", Value="CA"},
-                                                        new SelectListItem() { Text="Colorado", Value="CO"},
-                                                        new SelectListItem() { Text="Connecticut", Value="CT"},
-                                                        new SelectListItem() { Text="District of Columbia", Value="DC"},
-                                                        new SelectListItem() { Text="Delaware", Value="DE"},
-                                                        new SelectListItem() { Text="Florida", Value="FL"},
-                                                        new SelectListItem() { Text="Georgia", Value="GA"},
-                                                        new SelectListItem() { Text="Hawaii", Value="HI"},
-                                                        new SelectListItem() { Text="Idaho", Value="ID"},
-                                                        new SelectListItem() { Text="Illinois", Value="IL"},
-                                                        new SelectListItem() { Text="Indiana", Value="IN"},
-                                                        new SelectListItem() { Text="Iowa", Value="IA"},
-                                                        new SelectListItem() { Text="Kansas", Value="KS"},
-                                                        new SelectListItem() { Text="Kentucky", Value="KY"},
-                                                        new SelectListItem() { Text="Louisiana", Value="LA"},
-                                                        new SelectListItem() { Text="Maine", Value="ME"},
-                                                        new SelectListItem() { Text="Maryland", Value="MD"},
-                                                        new SelectListItem() { Text="Massachusetts", Value="MA"},
-                                                        new SelectListItem() { Text="Michigan", Value="MI"},
-                                                        new SelectListItem() { Text="Minnesota", Value="MN"},
-                                                        new SelectListItem() { Text="Mississippi", Value="MS"},
-                                                        new SelectListItem() { Text="Missouri", Value="MO"},
-                                                        new SelectListItem() { Text="Montana", Value="MT"},
-                                                        new SelectListItem() { Text="Nebraska", Value="NE"},
-                                                        new SelectListItem() { Text="Nevada", Value="NV"},
-                                                        new SelectListItem() { Text="New Hampshire", Value="NH"},
-                                                        new SelectListItem() { Text="New Jersey", Value="NJ"},
-                                                        new SelectListItem() { Text="New Mexico", Value="NM"},
-                                                        new SelectListItem() { Text="New York", Value="NY"},
-                                                        new SelectListItem() { Text="North Carolina", Value="NC"},
-                                                        new SelectListItem() { Text="North Dakota", Value="ND"},
-                                                        new SelectListItem() { Text="Ohio", Value="OH"},
-                                                        new SelectListItem() { Text="Oklahoma", Value="OK"},
-                                                        new SelectListItem() { Text="Oregon", Value="OR"},
-                                                        new SelectListItem() { Text="Pennsylvania", Value="PA"},
-                                                        new SelectListItem() { Text="Rhode Island", Value="RI"},
-                                                        new SelectListItem() { Text="South Carolina", Value="SC"},
-                                                        new SelectListItem() { Text="South Dakota", Value="SD"},
-                                                        new SelectListItem() { Text="Tennessee", Value="TN"},
-                                                        new SelectListItem() { Text="Texas", Value="TX"},
-                                                        new SelectListItem() { Text="Utah", Value="UT"},
-                                                        new SelectListItem() { Text="Vermont", Value="VT"},
-                                                        new SelectListItem() { Text="Virginia", Value="VA"},
-                                                        new SelectListItem() { Text="Washington", Value="WA"},
-                                                        new SelectListItem() { Text="West Virginia", Value="WV"},
-                                                        new SelectListItem() { Text="Wisconsin", Value="WI"},
-                                                        new SelectListItem() { Text="Wyoming", Value="WY"}
-                                                    },
-                                                    "Value",
-                                                    "Text"
-                                                    ),
-                                                    null,
-                                                    new { @class = "form-control" }
-                                                )
+                                                @if (editableClaims.Contains("billing_address"))
+                                                {
+                                                    <select asp-for="BillingState" class="form-control">
+                                                        <option value=""></option>
+                                                        <option value="AL">Alabama</option>
+                                                        <option value="AK">Alaska</option>
+                                                        <option value="AZ">Arizona</option>
+                                                        <option value="AR">Arkansas</option>
+                                                        <option value="CA">California</option>
+                                                        <option value="CO">Colorado</option>
+                                                        <option value="CT">Connecticut</option>
+                                                        <option value="DC">District of Columbia</option>
+                                                        <option value="DE">Delaware</option>
+                                                        <option value="FL">Florida</option>
+                                                        <option value="GA">Georgia</option>
+                                                        <option value="HI">Hawaii</option>
+                                                        <option value="ID">Idaho</option>
+                                                        <option value="IL">Illinois</option>
+                                                        <option value="IN">Indiana</option>
+                                                        <option value="IA">Iowa</option>
+                                                        <option value="KS">Kansas</option>
+                                                        <option value="KY">Kentucky</option>
+                                                        <option value="LA">Louisiana</option>
+                                                        <option value="ME">Maine</option>
+                                                        <option value="MD">Maryland</option>
+                                                        <option value="MA">Massachusetts</option>
+                                                        <option value="MI">Michigan</option>
+                                                        <option value="MN">Minnesota</option>
+                                                        <option value="MS">Mississippi</option>
+                                                        <option value="MO">Missouri</option>
+                                                        <option value="MT">Montana</option>
+                                                        <option value="NE">Nebraska</option>
+                                                        <option value="NV">Nevada</option>
+                                                        <option value="NH">New Hampshire</option>
+                                                        <option value="NJ">New Jersey</option>
+                                                        <option value="NM">New Mexico</option>
+                                                        <option value="NY">New York</option>
+                                                        <option value="NC">North Carolina</option>
+                                                        <option value="ND">North Dakota</option>
+                                                        <option value="OH">Ohio</option>
+                                                        <option value="OK">Oklahoma</option>
+                                                        <option value="OR">Oregon</option>
+                                                        <option value="PA">Pennsylvania</option>
+                                                        <option value="RI">Rhode Island</option>
+                                                        <option value="SC">South Carolina</option>
+                                                        <option value="SD">South Dakota</option>
+                                                        <option value="TN">Tennessee</option>
+                                                        <option value="TX">Texas</option>
+                                                        <option value="UT">Utah</option>
+                                                        <option value="VT">Vermont</option>
+                                                        <option value="VA">Virginia</option>
+                                                        <option value="WA">Washington</option>
+                                                        <option value="WV">West Virginia</option>
+                                                        <option value="WI">Wisconsin</option>
+                                                        <option value="WY">Wyoming</option>
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    <select asp-for="BillingState" readonly="readonly" class="form-control">
+                                                        <option value=""></option>
+                                                        <option value="AL">Alabama</option>
+                                                        <option value="AK">Alaska</option>
+                                                        <option value="AZ">Arizona</option>
+                                                        <option value="AR">Arkansas</option>
+                                                        <option value="CA">California</option>
+                                                        <option value="CO">Colorado</option>
+                                                        <option value="CT">Connecticut</option>
+                                                        <option value="DC">District of Columbia</option>
+                                                        <option value="DE">Delaware</option>
+                                                        <option value="FL">Florida</option>
+                                                        <option value="GA">Georgia</option>
+                                                        <option value="HI">Hawaii</option>
+                                                        <option value="ID">Idaho</option>
+                                                        <option value="IL">Illinois</option>
+                                                        <option value="IN">Indiana</option>
+                                                        <option value="IA">Iowa</option>
+                                                        <option value="KS">Kansas</option>
+                                                        <option value="KY">Kentucky</option>
+                                                        <option value="LA">Louisiana</option>
+                                                        <option value="ME">Maine</option>
+                                                        <option value="MD">Maryland</option>
+                                                        <option value="MA">Massachusetts</option>
+                                                        <option value="MI">Michigan</option>
+                                                        <option value="MN">Minnesota</option>
+                                                        <option value="MS">Mississippi</option>
+                                                        <option value="MO">Missouri</option>
+                                                        <option value="MT">Montana</option>
+                                                        <option value="NE">Nebraska</option>
+                                                        <option value="NV">Nevada</option>
+                                                        <option value="NH">New Hampshire</option>
+                                                        <option value="NJ">New Jersey</option>
+                                                        <option value="NM">New Mexico</option>
+                                                        <option value="NY">New York</option>
+                                                        <option value="NC">North Carolina</option>
+                                                        <option value="ND">North Dakota</option>
+                                                        <option value="OH">Ohio</option>
+                                                        <option value="OK">Oklahoma</option>
+                                                        <option value="OR">Oregon</option>
+                                                        <option value="PA">Pennsylvania</option>
+                                                        <option value="RI">Rhode Island</option>
+                                                        <option value="SC">South Carolina</option>
+                                                        <option value="SD">South Dakota</option>
+                                                        <option value="TN">Tennessee</option>
+                                                        <option value="TX">Texas</option>
+                                                        <option value="UT">Utah</option>
+                                                        <option value="VT">Vermont</option>
+                                                        <option value="VA">Virginia</option>
+                                                        <option value="WA">Washington</option>
+                                                        <option value="WV">West Virginia</option>
+                                                        <option value="WI">Wisconsin</option>
+                                                        <option value="WY">Wyoming</option>
+                                                    </select>
+                                                }
                                             </div>
                                             <div class="form-group col-12 col-md-3">
                                                 <label asp-for="BillingZip"></label>
-                                                <input asp-for="BillingZip" class="form-control" />
+                                                @if (editableClaims.Contains("billing_address"))
+                                                {
+                                                    <input asp-for="BillingZip" class="form-control" /> 
+                                                }
+                                                else
+                                                {
+                                                    <input asp-for="BillingZip" readonly="readonly" class="form-control" />
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -275,7 +465,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary col-sm-12 col-md-3 col-xl-2">Next</button>
+                            <button type="submit" class="btn btn-primary col-sm-12 col-md-3 col-xl-2">@(Model.LoginMode == LoginMode.External ? "Create Account" : "Next")</button>
                             @Html.ActionLink("Cancel", "Login", "Account", null, new { @class = "btn btn-secondary col-sm-12 col-md-3 col-xl-2" })
                         </div>
                         <div class="form-hidden" style="display:none;">

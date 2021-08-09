@@ -85,7 +85,7 @@ namespace Candlewire.Identity.ServerControllers
             var provider = await GetProvider();
             var toast = await _sessionManager.GetAsync<ProfileToastCache>("ProfileToastCache", true);
             var editables = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
-            var visibles = String.Join(",", _providerManager.GetEditableClaims(provider).ToArray());
+            var visibles = String.Join(",", _providerManager.GetVisibleClaims(provider).ToArray());
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
