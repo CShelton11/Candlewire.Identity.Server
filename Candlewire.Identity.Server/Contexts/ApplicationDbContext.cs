@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Candlewire.Identity.Server.Contexts
 {
-    public class ApplicationDbContext: IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext: IdentityDbContext<ApplicationUser, ApplicationRole, String>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options): base(options)
         {
