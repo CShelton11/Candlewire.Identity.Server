@@ -75,7 +75,17 @@
                 </div>
                 <div class="row">
                     <div class="home-bottom col-12 padding-top-xs-15 padding-bottom-xs-0">
-                        <div style="text-decoration:none;color:silver;text-align:center;">New applications are coming soon!</div>
+                        @if (Model.Clients == null || Model.Clients.Count == 0)
+                        {
+                            <div style="text-decoration:none;color:silver;text-align:center;">New applications are coming soon!</div>
+                        }
+                        else
+                        {
+                            for (var i = 0; i < Model.Clients.Count; i++)
+                            {
+                                // Code to render client application links goes here
+                            }
+                        }
                     </div>
                 </div>
             </div>

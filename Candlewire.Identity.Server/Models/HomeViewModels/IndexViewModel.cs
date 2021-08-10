@@ -17,5 +17,7 @@ namespace Candlewire.Identity.Server.Models.HomeViewModels
 
         [Display(Name = "Username")]
         public String Username { get; set; }
+
+        public List<ClientViewModel> Clients { get; set; }
     }
 }

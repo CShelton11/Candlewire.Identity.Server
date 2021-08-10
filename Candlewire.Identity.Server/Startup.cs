@@ -27,6 +27,7 @@ using Candlewire.Identity.Server.Migrations;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Microsoft.IdentityModel.Tokens;
+using IdentityServer4.EntityFramework.DbContexts;
 
 namespace Candlewire.Identity.Server
 {
@@ -149,9 +150,11 @@ namespace Candlewire.Identity.Server
             services.AddTransient<ClaimManager>();
             services.AddTransient<RoleManager>();
             services.AddTransient<ProviderManager>();
+            services.AddTransient<ClientManager>();
             services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<ProtectionDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<PersistenceDbContext>(options => options.UseNpgsql(connectionString));
+            services.AddDbContext<ConfigurationDbContext>(options => options.UseNpgsql(connectionString));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
