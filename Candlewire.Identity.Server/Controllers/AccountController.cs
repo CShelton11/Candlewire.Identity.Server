@@ -97,7 +97,10 @@ namespace Candlewire.Identity.ServerControllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl = null)
         {
+            await _signInManager.SignOutAsync();    // Ensures current internal login is destroyed
+            await _signInManager.SignoutExternalAsync(HttpContext);     // Ensures previous external signin is destroyed
             await _sessionManager.ClearAsync();                     // Ensures previous session data is destroyed 
+
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
             if (context?.IdP != null)
             {

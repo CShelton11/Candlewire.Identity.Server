@@ -226,13 +226,13 @@
                                 @if (!Model.EmailConfirmed && !String.IsNullOrEmpty(Model.EmailAddress))
                                 {
                                     <div class="col-md-5">
-                                        <a href="/Manage/Verify?type=email?mode=user" class="email-verify-button btn">Verify Email</a>
+                                        <a href="/Manage/Verify?type=email?mode=user" class="email-verify-button btn" style="margin-bottom:20px;">Verify Email</a>
                                     </div>
                                 }
                                 @if (!Model.PhoneConfirmed && !String.IsNullOrEmpty(Model.PhoneNumber))
                                 {
                                     <div class="col-md-5">
-                                        <a href="/Manage/Verify?type=phone&mode=user" class="email-verify-button btn">Verify Phone</a>
+                                        <a href="/Manage/Verify?type=phone&mode=user" class="email-verify-button btn" style="margin-bottom:20px;">Verify Phone</a>
                                     </div>
                                 }
                             </div>

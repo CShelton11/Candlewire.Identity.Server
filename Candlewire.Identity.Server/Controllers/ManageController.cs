@@ -137,6 +137,8 @@ namespace Candlewire.Identity.ServerControllers
 
         private async Task<SecurityViewModel> BuildSecurityViewModel()
         {
+            var provider = await GetProvider();
+            var mode = _providerManager.GetLoginMode(provider);
             var user = await _userManager.GetUserAsync(User);
             var toast = await _sessionManager.GetAsync<SecurityToastCache>("SecurityToastCache", true);
             
@@ -147,6 +149,7 @@ namespace Candlewire.Identity.ServerControllers
                 PhoneNumber = user.PhoneNumber,
                 PhoneConfirmed = user.PhoneNumberConfirmed,
                 TwoFactorEnabled = user.TwoFactorEnabled,
+                LoginMode = mode,
                 ToastTitle = toast == null ? "" : toast.ToastTitle,
                 ToastMessages = toast == null ? new List<String>() : toast.ToastMessages,
                 ToastLevel = toast == null ? "" : toast.ToastLevel
