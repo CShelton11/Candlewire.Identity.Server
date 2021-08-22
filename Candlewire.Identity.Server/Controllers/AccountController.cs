@@ -169,9 +169,15 @@ namespace Candlewire.Identity.ServerControllers
 
             if (vm.ShowLogoutPrompt == false)
             {
-                return await Logout(vm);
+                await _sessionManager.ClearAsync();
+                await _signInManager.SignOutAsync();
+                await _events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()));
+                return RedirectToAction("Login");
             }
-            return View(vm);
+            else
+            {
+                return View(vm);
+            }
         }
 
         [HttpPost]
