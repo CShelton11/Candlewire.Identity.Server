@@ -81,9 +81,9 @@
                             @if (navigable)
                             {
                             <div class="overflow-horizontal-scroll-xs overflow-vertical-none-md">
-                                <a class="btn @homeclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Home page" href="/Home/Index"><i class="fa fa-user"></i> Home</a>
-                                <a class="btn @profileclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Manage basic profile information" href="/Manage/Profile"><i class="fa fa-user"></i> Profile</a>
-                                <a class="btn @securityclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Manage password and security settings" href="/Manage/Security"><i class="fa fa-shield-alt"></i> Security</a>
+                                <a class="btn @homeclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Home page" asp-controller="Home" asp-action="Index"><i class="fa fa-user"></i> Home</a>
+                                <a class="btn @profileclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Manage basic profile information" asp-controller="Manage" asp-action="Profile"><i class="fa fa-user"></i> Profile</a>
+                                <a class="btn @securityclass col-5 col-md-12 col-lg-8 text-center text-md-left shadow-none rounded-right-md-15 rounded-all-xs-15 padding-bottom-xs-0 text-nowrap" style="height:40px;" title="Manage password and security settings" asp-controller="Manage" asp-action="Security"><i class="fa fa-shield-alt"></i> Security</a>
                             </div>
                             }
                         </div>

@@ -43,7 +43,7 @@ else if (Model.Authenticated == false)
                             <form asp-action="Logout">
                                 <fieldset>
                                     <div class="form-group">
-                                        <a class="btn btn-primary col-sm-12 col-md-4 col-xl-4" href="/Account/Login">Sign in again</a>
+                                        <a class="btn btn-primary col-sm-12 col-md-4 col-xl-4" asp-controller="Account" asp-action="Login">Sign in again</a>
                                     </div>
                                 </fieldset>
                             </form>

@@ -28,6 +28,7 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Microsoft.IdentityModel.Tokens;
 using IdentityServer4.EntityFramework.DbContexts;
+using Microsoft.Extensions.Options;
 
 namespace Candlewire.Identity.Server
 {
@@ -51,6 +52,7 @@ namespace Candlewire.Identity.Server
             var emailSettings = Configuration.GetSection("EmailSettings");
             var termSettings = Configuration.GetSection("TermSettings");
             var providerSettings = Configuration.GetSection("ProviderSettings");
+            var proxySettings = Configuration.GetSection("ProxySettings");
 
             // Setup profile data by adding properties to application user
             services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
@@ -141,6 +143,7 @@ namespace Candlewire.Identity.Server
             services.Configure<EmailSettings>(emailSettings);
             services.Configure<TermSettings>(termSettings);
             services.Configure<ProviderSettings>(options => providerSettings.Bind(options));
+            services.Configure<ProxySettings>(proxySettings);
             services.AddTransient<IEmailSender, MessageSender>();
             services.AddTransient<ISmsSender, MessageSender>();
             services.AddTransient<SessionManager>();
@@ -155,6 +158,9 @@ namespace Candlewire.Identity.Server
             services.AddDbContext<ProtectionDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<PersistenceDbContext>(options => options.UseNpgsql(connectionString));
             services.AddDbContext<ConfigurationDbContext>(options => options.UseNpgsql(connectionString));
+
+            // This is being done solely to make these settings accessible from the service helper
+            services.AddSingleton(resolver => resolver.GetRequiredService<IOptionsMonitor<ProviderSettings>>().CurrentValue);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

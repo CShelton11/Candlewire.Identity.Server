@@ -1,11 +1,21 @@
-﻿@model ProfileViewModel
+﻿@using Microsoft.Extensions.Options;
+@using Candlewire.Identity.Server.Settings
 
-@{ 
+@inject IOptions<ProxySettings> _proxySettings
+
+@model ProfileViewModel
+
+@{
     Layout = "/Views/Shared/_Layout.cshtml";
+
+    var proxySettings = _proxySettings.Value;
+    var applicationHost = proxySettings.Host;
+    var applicationScheme = proxySettings.Scheme;
+    var applicationPath = applicationScheme + "://" + applicationHost;
 
     var visibleClaims = (Model.VisibleClaims ?? "").Split((",").ToCharArray()).ToList();
     var editableClaims = (Model.EditableClaims ?? "").Split((",").ToCharArray()).ToList();
- }
+}
 
 <link rel="stylesheet" href="~/css/manage-profile.css" />
 <script type="text/javascript" src="~/js/manage-profile.js"></script>
@@ -37,7 +47,7 @@
                     <p></p>
                 </div>
             </div>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("preferred_username") ? "" : "display:none")" href="@(editableClaims.Contains("preferred_username") ? "/Manage/Username" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("preferred_username") ? "" : "display:none")" href="@(editableClaims.Contains("preferred_username") ? applicationPath + "/Manage/Username" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -51,7 +61,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("given_name") || Model.VisibleClaims.Contains("family_name") ? "" : "display:none")" href="@(editableClaims.Contains("given_name") || editableClaims.Contains("family_name") ? "/Manage/Name" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("given_name") || Model.VisibleClaims.Contains("family_name") ? "" : "display:none")" href="@(editableClaims.Contains("given_name") || editableClaims.Contains("family_name") ? applicationPath + "/Manage/Name" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-12 col-md-5">
@@ -69,7 +79,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("shipping_address") ? "" : "display:none")" href="@(editableClaims.Contains("shipping_address") ? "/Manage/Address?type=shipping_address" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("shipping_address") ? "" : "display:none")" href="@(editableClaims.Contains("shipping_address") ? applicationPath + "/Manage/Address?type=shipping_address" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -95,7 +105,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("billing_address") ? "" : "display:none")" href="@(editableClaims.Contains("billing_address") ? "/Manage/Address?type=billing_address" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("billing_address") ? "" : "display:none")" href="@(editableClaims.Contains("billing_address") ? applicationPath + "/Manage/Address?type=billing_address" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -121,7 +131,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("nickname") ? "" : "display:none")" href="@(editableClaims.Contains("nickname") ? "/Manage/Nickname" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("nickname") ? "" : "display:none")" href="@(editableClaims.Contains("nickname") ? applicationPath + "/Manage/Nickname" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
@@ -135,7 +145,7 @@
                     <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                 }
             </a>
-            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("birthdate") ? "" : "display:none")" href="@(editableClaims.Contains("birthdate") ? "/Manage/Birthdate" : "javascript:void(0)")">
+            <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("birthdate") ? "" : "display:none")" href="@(editableClaims.Contains("birthdate") ? applicationPath + "/Manage/Birthdate" : "javascript:void(0)")">
                 <div class="col-12 col-md-10">
                     <div class="row">
                         <div class="form-group col-md-6">
@@ -159,7 +169,7 @@
                 <div class="card-subtitle">Update your email address and phone number</div>
             </div>
             <div class="card-body padding-top-xs-0 padding-bottom-xs-0">
-                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("email") ? "" : "display:none")" href="@(editableClaims.Contains("email") ? "/Manage/Email" : "javascript:void(0)")">
+                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("email") ? "" : "display:none")" href="@(editableClaims.Contains("email") ? applicationPath + "/Manage/Email" : "javascript:void(0)")">
                     <div class="col-12 col-md-10">
                         <div class="row">
                             <div class="form-group col-md-6">
@@ -190,7 +200,7 @@
                         <i class="fa fa-chevron-right float-right position-absolute padding-top-xs-5 padding-top-md-30" style="right:10px;"></i>
                     }
                 </a>
-                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("phone_number") ? "" : "display:none")" href="@(editableClaims.Contains("phone_number") ? "/Manage/Phone" : "javascript:void(0)")">
+                <a class="row hover-light border-bottom padding-top-xs-15 min-height-100" style="@(visibleClaims.Contains("phone_number") ? "" : "display:none")" href="@(editableClaims.Contains("phone_number") ? applicationPath + "/Manage/Phone" : "javascript:void(0)")">
                     <div class="col-12 col-md-10">
                         <div class="row">
                             <div class="form-group col-md-5">
@@ -226,13 +236,13 @@
                                 @if (!Model.EmailConfirmed && !String.IsNullOrEmpty(Model.EmailAddress))
                                 {
                                     <div class="col-md-5">
-                                        <a href="/Manage/Verify?type=email?mode=user" class="email-verify-button btn" style="margin-bottom:20px;">Verify Email</a>
+                                        <a href="@(applicationPath + "/Manage/Verify?type=email?mode=user")" class="email-verify-button btn" style="margin-bottom:20px;">Verify Email</a>
                                     </div>
                                 }
                                 @if (!Model.PhoneConfirmed && !String.IsNullOrEmpty(Model.PhoneNumber))
                                 {
                                     <div class="col-md-5">
-                                        <a href="/Manage/Verify?type=phone&mode=user" class="email-verify-button btn" style="margin-bottom:20px;">Verify Phone</a>
+                                        <a href="@(applicationPath + "/Manage/Verify?type=phone&mode=user")" class="email-verify-button btn" style="margin-bottom:20px;">Verify Phone</a>
                                     </div>
                                 }
                             </div>
