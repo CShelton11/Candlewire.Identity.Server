@@ -21,34 +21,40 @@ namespace Candlewire.Identity.Server.Managers
             _providerSettings = providerSettings.Value;
         }
 
+        private ProviderSetting GetSettings(String provider)
+        {
+            var settings = _providerSettings.ProviderInstances.FirstOrDefault(a => a.ProviderName.ToLower() == provider.ToLower());
+            return settings;
+        }
+
         public LoginMode GetLoginMode(String provider)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             Enum.TryParse<LoginMode>(settings?.LoginMode, out LoginMode mode);
             return mode;
         }
 
         public List<String> GetVisibleClaims(String provider)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             return settings?.VisibleClaims ?? new List<String>();
         }
 
         public List<String> GetEditableClaims(String provider)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             return settings?.EditableClaims ?? new List<String>();
         }
 
         public List<String> GetRequireClaims(String provider)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             return settings?.RequireClaims ?? new List<String>();
         }
 
         public Boolean HasRestrictedDomain(String provider, String domainName)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             if (settings?.RestrictedDomains == null || settings?.RestrictedDomains.Count == 0) { return false; }
             else
             {
@@ -58,7 +64,7 @@ namespace Candlewire.Identity.Server.Managers
 
         public Boolean HasAuthorizedDomain(String provider, String domainName)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             if (settings?.AuthorizedDomains == null || settings?.AuthorizedDomains.Count == 0) { return true; }
             else
             {
@@ -68,7 +74,7 @@ namespace Candlewire.Identity.Server.Managers
 
         public Boolean HasEditableClaim(String provider, String claimType)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             var items = settings?.EditableClaims;
             var claims = items != null ? items : new List<String>();
 
@@ -91,7 +97,7 @@ namespace Candlewire.Identity.Server.Managers
 
         public Boolean HasRequiredClaim(String provider, String claimType)
         {
-            var settings = (ProviderSetting)this._providerSettings.GetType().GetProperty(provider, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)?.GetValue(this._providerSettings, null);
+            var settings = GetSettings(provider);
             var items = settings?.RequireClaims;
             var claims = items != null ? items : new List<String>();
 

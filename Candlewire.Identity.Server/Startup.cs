@@ -29,6 +29,7 @@ using Serilog;
 using Microsoft.IdentityModel.Tokens;
 using IdentityServer4.EntityFramework.DbContexts;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Candlewire.Identity.Server
 {
@@ -87,43 +88,60 @@ namespace Candlewire.Identity.Server
             // Store data protection keys to database to enable scaling across multiple servers
             services.AddDataProtection().PersistKeysToDbContext<ProtectionDbContext>();
 
-            // Add authentiction to application
-            services.AddAuthentication()
-            .AddOpenIdConnect("azure", "Azure", options =>
+            // Dynamically add providers using array provided from app settings
+            var providerInstances = providerSettings.GetSection("ProviderInstances").Get<List<ProviderSetting>>();
+            var providerList = providerInstances.Where(a => a.ProviderEnabled && a.ProviderType?.ToLower() != "forms").ToList();
+            for (var i = 0; i < providerList.Count; i++)
             {
-                options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
-                options.SignOutScheme = IdentityServerConstants.SignoutScheme;
-                options.Authority = "https://login.windows.net/tenentid";
-                options.ClientId = "clientid";
-                options.ClientSecret = "clientsecret";
-                options.ResponseType = OpenIdConnectResponseType.IdToken;
-                options.CallbackPath = "/Account/ExternalLoginCallback/signin-azure";
-            })
-            .AddGoogle("google", "Google", options =>
-            {
-                options.ClientId = providerSettings.GetSection("Google")["ClientId"];
-                options.ClientSecret = providerSettings.GetSection("Google")["ClientSecret"];
-                options.CallbackPath = providerSettings.GetSection("Google")["CallbackPath"];
-                options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
-            })
-            .AddFacebook("facebook", "Facebook", options =>
-            {
-                options.AppId = providerSettings.GetSection("Facebook")["ClientId"];
-                options.AppSecret = providerSettings.GetSection("Facebook")["ClientSecret"];
-                options.CallbackPath = providerSettings.GetSection("Facebook")["CallbackPath"];
-                options.Scope.Add("email");
-                options.Fields.Add("name");
-                options.Fields.Add("email");
-            })
-            .AddOpenIdConnect("adfs", "Adfs", options =>
-            {
-                options.Authority = "https://sso.domain.com/adfs";
-                options.ClientId = providerSettings.GetSection("Adfs")["ClientId"];
-                options.ClientSecret = providerSettings.GetSection("Adfs")["ClientSecret"];
-                options.CallbackPath = providerSettings.GetSection("Adfs")["CallbackPath"];
-                options.TokenValidationParameters = new TokenValidationParameters { ValidateIssuer = false };
-                options.ResponseType = "code id_token";
-            });
+                var providerSetting = providerList[i];
+                var type = providerSetting.ProviderType;
+                var authority = providerSetting.Authority;
+                var name = providerSetting.ProviderName;
+                var code = providerSetting.ProviderCode;
+                var id = providerSetting.ClientId;
+                var secret = providerSetting.ClientSecret;
+                var scopes = providerSetting.ClientScopes == null ? new List<String>() : providerSetting.ClientScopes;
+                var fields = providerSetting.ClientFields == null ? new List<String>() : providerSetting.ClientFields;
+                var response = providerSetting.ClientResponse;
+                var callback = providerSetting.CallbackPath;
+
+                if (type.ToLower() == "openid")
+                {
+                    services.AddAuthentication().AddOpenIdConnect(code, name, options =>
+                    {
+                        options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                        options.SignOutScheme = IdentityServerConstants.SignoutScheme;
+                        options.Authority = authority;
+                        options.ClientId = "clientid";
+                        options.ClientSecret = "clientsecret";
+                        options.ResponseType = response;
+                        options.CallbackPath = callback;
+                        for (var j = 0; j < scopes.Count; j++) { options.Scope.Add(scopes[j]); }
+                    });
+                }
+                else if (type.ToLower() == "google")
+                {
+                    services.AddAuthentication().AddGoogle(code, name, options =>
+                    {
+                        options.ClientId = id;
+                        options.ClientSecret = secret;
+                        options.CallbackPath = callback;
+                        options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                        for (var j = 0; j < scopes.Count; j++) { options.Scope.Add(scopes[j]); }
+                    });
+                }
+                else if (type.ToLower() == "facebook")
+                {
+                    services.AddAuthentication().AddFacebook(code, name, options =>
+                    {
+                        options.AppId = id;
+                        options.AppSecret = secret;
+                        options.CallbackPath = callback;
+                        for (var j = 0; j < scopes.Count; j++) { options.Scope.Add(scopes[j]); }
+                        for (var j = 0; j < fields.Count; j++) { options.Fields.Add(fields[j]); }
+                    });
+                }
+            }
 
             // Configure cors
             services.AddCors(options => {
@@ -160,6 +178,7 @@ namespace Candlewire.Identity.Server
             services.AddDbContext<ConfigurationDbContext>(options => options.UseNpgsql(connectionString));
 
             // This is being done solely to make these settings accessible from the service helper
+            // Will be useful when making provider requirements attribute driven instead of coded in the controller
             services.AddSingleton(resolver => resolver.GetRequiredService<IOptionsMonitor<ProviderSettings>>().CurrentValue);
         }
 
