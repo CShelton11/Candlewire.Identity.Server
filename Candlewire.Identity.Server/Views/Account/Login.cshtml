@@ -1,12 +1,44 @@
-﻿@model LoginViewModel
+﻿@using Microsoft.Extensions.Options
+@using Candlewire.Identity.Server.Settings
+@using Candlewire.Identity.Server.Extensions
+
+@model LoginViewModel
+@inject IOptions<ProviderSettings> _providerSettings
+
+@{ 
+    var providerInstances = _providerSettings.Value.ProviderInstances;
+
+    var internalProviders = providerInstances.Where(a => a.ProviderType.ToLower() == "forms" && a.ProviderEnabled == true).ToList();
+    var externalProviders = providerInstances.Where(a => a.ProviderType.ToLower() != "forms" && a.ProviderEnabled == true).ToList();
+    var concealedProviders = externalProviders == null ? null : externalProviders.Where(a => a.ProviderDisplayed == false).ToList();
+    var visibleProviders = externalProviders == null ? null : externalProviders.Where(a => a.ProviderDisplayed == true).ToList();
+
+    var internalEnabled = internalProviders == null || internalProviders.Count() == 0 ? false : true;
+    var externalEnabled = externalProviders == null || externalProviders.Count() == 0 ? false : true;
+    var registerEnabled = internalEnabled == false ? false : internalProviders.FirstOrDefault().RegistrationMode.ToLower() != "external";
+
+    var internalDisplayed = internalEnabled == false ? false : internalProviders.Any(a => a.ProviderDisplayed == true);
+    var externalDisplayed = externalEnabled == false ? false : externalProviders.Any(a => a.ProviderDisplayed == true);
+    var externalConcealed = externalEnabled == false ? false : externalProviders.Any(a => a.ProviderDisplayed == false);
+
+    var errorClass = internalDisplayed != externalDisplayed ? "col-12 col-md-10 offset-md-1" : "col-12";
+    var panelClass = internalDisplayed != externalDisplayed ? "col-12 col-md-10 offset-md-1" : "col-12 col-md-6";
+    var fieldClass = internalDisplayed != externalDisplayed ? "col-12 col-md-8" : "col-12";
+    var buttonClass = internalDisplayed != externalDisplayed ? "col-12 col-md-2" : "col-12 col-md-3";
+    var registerClass = internalDisplayed != externalDisplayed ? "col-12 col-md-3" : "col-12 col-md-5";
+}
 
 <div class="login-page">
-    <partial name="_ValidationSummary" />
+    <div class="row">
+        <div class="@(errorClass)">
+            <partial name="_ValidationSummary" />
+        </div>
+    </div>
 
     <div class="row">
-        @if (Model.EnableLocalLogin)
+        @if (internalDisplayed == true || externalConcealed == true)
         {
-            <div class="col-xs-6 col-md-6">
+            <div class="internal-providers @panelClass">
                 <div class="card" style="min-height:380px;">
                     <div class="card-header">
                         <h3 class="card-title">Candlewire Login</h3>
@@ -14,30 +46,33 @@
                     </div>
                     <div class="card-body">
                         <form asp-route="Account">
-                            <input type="hidden" asp-for="ReturnUrl" />
                             <fieldset>
-                                <div class="form-group">
-                                    <label asp-for="Email"></label>
-                                    <input class="form-control" placeholder="Email Address" asp-for="Email" autofocus>
-                                </div>
-                                <div class="form-group">
-                                    <label asp-for="Password"></label>
-                                    <input type="password" class="form-control" placeholder="Password" asp-for="Password" autocomplete="off">
-                                </div>
-                                @if (Model.AllowRememberLogin)
-                                {
-                                    <div class="form-group login-remember">
-                                        <label asp-for="RememberLogin">
-                                            <input asp-for="RememberLogin">
-                                            <strong>Remember My Login</strong>
-                                        </label>
-                                    </div>
-                                }
+                                <input type="hidden" asp-for="ReturnUrl" />
+                                <input type="hidden" asp-for="StepNumber" />
 
+                                <div class="form-group" style="@(String.IsNullOrEmpty(Model.Email) == false && Model.Email.IsValidEmail() ? "display:none" : "")">
+                                    <label asp-for="Email"></label>
+                                    <input class="form-control @(fieldClass)" placeholder="Email Address" asp-for="Email" autofocus>
+                                </div>
+                                <div class="form-group" style="@(String.IsNullOrEmpty(Model.Email) == false && Model.Email.IsValidEmail() ? "" : "display:none")">
+                                    <label asp-for="Password"></label>
+                                    <input type="password" class="form-control @(fieldClass)" placeholder="Password" asp-for="Password" autocomplete="off">
+                                </div>
+                                <div class="form-group login-remember" style="@(String.IsNullOrEmpty(Model.Email) == false && Model.Email.IsValidEmail() ? "" : "display:none")">
+                                    <label asp-for="RememberLogin">
+                                        <input asp-for="RememberLogin">
+                                        <strong>Remember My Login</strong>
+                                    </label>
+                                </div>
                                 <div class="row">
                                     <div class="col-xs-12 col-md-12">
-                                        <button class="btn btn-primary col-xs-12 col-md-4" name="button" value="login" formaction="Login">Login</button>
-                                        <button class="btn col-xs-12 col-md-6" name="button" value="create" formaction="Create">Create New Account</button>
+                                        <button class="btn btn-primary @(buttonClass)" name="button" value="login" formaction="Login">@(Model.StepNumber == "1" ? "Next" : "Login")</button>
+                                        <a class="btn btn-secondary @(buttonClass)" asp-action="Login" asp-controller="Account">Cancel</a>
+
+                                        @if (registerEnabled == true && Model.StepNumber == "1")
+                                        {
+                                            <button class="btn @(registerClass)" name="button" value="create" formaction="Create">Create Account</button>
+                                        }
                                     </div>
                                 </div>
                             </fieldset>
@@ -47,9 +82,9 @@
             </div>
         }
 
-        @if (Model.VisibleExternalProviders.Any())
+        @if (externalDisplayed == true)
         {
-            <div class="col-xs-6 col-md-6 external-providers">
+            <div class="external-providers @panelClass">
                 <div class="card" style="min-height:380px;">
                     <div class="card-header">
                         <h3 class="card-title">3rd Party Login</h3>
@@ -58,16 +93,16 @@
                     <div class="card-body">
                         <form asp-route="Account">
                             <div class="row">
-                                @foreach (var provider in Model.ExternalProviders)
+                                @foreach (var provider in visibleProviders)
                                 {
                                     <div class="col-12 col-md-6">
-                                        <a class="btn col-md-12 no-gutters" asp-action="ExternalLogin" asp-route-provider="@provider.AuthenticationScheme" asp-route-returnUrl="@Model.ReturnUrl">
+                                        <a class="btn col-md-12 no-gutters" asp-action="ExternalLogin" asp-route-provider="@provider.ProviderCode" asp-route-returnUrl="@Model.ReturnUrl">
                                             <div class="d-block d-md-none">
-                                                <div class="btn-oauth btn-image @("btn-image-icon-" + provider.AuthenticationScheme.ToLower())"><span>Login with @provider.AuthenticationScheme</span></div>
+                                                <div class="btn-oauth btn-image @("btn-image-icon-" + provider.ProviderCode.ToLower())"><span>Login with @provider.ProviderName</span></div>
                                             </div>
                                             <div class="d-none d-md-block">
                                                 <div class="row" style="padding-left:5px;padding-right:5px;overflow:hidden;text-wrap:none;white-space:nowrap">
-                                                    <div class="btn-oauth btn-image @("btn-image-icon-" + provider.AuthenticationScheme.ToLower())"><span>Login with @provider.AuthenticationScheme</span></div>
+                                                    <div class="btn-oauth btn-image @("btn-image-icon-" + provider.ProviderCode.ToLower())"><span>Login with @provider.ProviderName</span></div>
                                                 </div>
                                             </div>
                                         </a>
@@ -77,6 +112,13 @@
                         </form>
                     </div>
                 </div>
+            </div>
+        }
+
+        @if(externalEnabled == false && internalEnabled == false)
+        {
+            <div>
+                A configuration error exists.  No login methods currently enabled.
             </div>
         }
     </div>

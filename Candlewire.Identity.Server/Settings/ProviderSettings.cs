@@ -26,6 +26,7 @@ namespace Candlewire.Identity.Server.Settings
         public List<String> ClientFields { get; set; }
         public String ClientResponse { get; set; }
         public String CallbackPath { get; set; }
+        public String RegistrationMode { get; set; }
         public String LoginMode { get; set; }
         public List<String> AuthorizedDomains { get; set; }
         public List<String> RestrictedDomains { get; set; }

@@ -60,11 +60,26 @@ namespace Candlewire.Identity.Server.Controllers
         }
 
         [HttpGet]
+        public IActionResult Unavailable()
+        {
+            return View();
+        }
+
+        [HttpGet]
         [RequireParameter(new String[] { "returnUrl", "firstName", "lastName", "nickName", "birthDate", "emailAddress", "phoneNumber", "shippingStreet", "shippingCity", "shippingState", "shippingZip", "billingStreet", "billingCity", "billingState", "billingZip" })]
         public async Task<IActionResult> Signup(String returnUrl, String firstName, String lastName, String nickName, String birthDate, String emailAddress, String phoneNumber, String shippingStreet, String shippingCity, String shippingState, String shippingZip, String billingStreet, String billingCity, String billingState, String billingZip)
         {
             var result = await ExternalResultAsync();
             var provider = GetProvider(result);
+
+            if (provider.ToLower() == "forms")
+            {
+                var settings = _providerManager.GetSettingsByProviderCode("forms");
+                if (settings.RegistrationMode.ToLower() == "external")
+                {
+                    return RedirectToAction("Unavailable");
+                }
+            }
 
             var firstValue = (firstName ?? "").Trim();
             var lastValue = (lastName ?? "").Trim();
@@ -118,6 +133,16 @@ namespace Candlewire.Identity.Server.Controllers
         {
             var result = await ExternalResultAsync();
             var provider = GetProvider(result);
+
+            if (provider.ToLower() == "forms")
+            {
+                var settings = _providerManager.GetSettingsByProviderCode("forms");
+                if (settings.RegistrationMode.ToLower() == "external")
+                {
+                    return RedirectToAction("Unavailable");
+                }
+            }
+
             var mode = _providerManager.GetLoginMode(provider);
             var model = new SignupViewModel() { ReturnUrl = returnUrl, LoginMode = mode };
 
@@ -156,6 +181,15 @@ namespace Candlewire.Identity.Server.Controllers
             var result = await ExternalResultAsync();
             var mode = model.LoginMode;
             var provider = GetProvider(result);
+
+            if (provider.ToLower() == "forms")
+            {
+                var settings = _providerManager.GetSettingsByProviderCode("forms");
+                if (settings.RegistrationMode.ToLower() == "external")
+                {
+                    return RedirectToAction("Unavailable");
+                }
+            }
 
             if ((result != null && mode == LoginMode.Internal) || (result == null && (mode == LoginMode.External || mode == LoginMode.Mixed)))
             {

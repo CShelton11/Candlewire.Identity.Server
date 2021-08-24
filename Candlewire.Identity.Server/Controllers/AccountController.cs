@@ -97,23 +97,15 @@ namespace Candlewire.Identity.ServerControllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl = null)
         {
-            await _signInManager.SignOutAsync();    // Ensures current internal login is destroyed
+            await _signInManager.SignOutAsync();                        // Ensures current internal login is destroyed
             await _signInManager.SignoutExternalAsync(HttpContext);     // Ensures previous external signin is destroyed
-            await _sessionManager.ClearAsync();                     // Ensures previous session data is destroyed 
+            await _sessionManager.ClearAsync();                         // Ensures previous session data is destroyed 
 
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
-            if (context?.IdP != null)
-            {
-                return ExternalLogin(context.IdP, returnUrl);
-            }
+            var model = await BuildLoginViewModelAsync(returnUrl, context);
 
-            var vm = await BuildLoginViewModelAsync(returnUrl, context);
-            if (vm.EnableLocalLogin == false && vm.ExternalProviders.Count() == 1)
-            {
-                return ExternalLogin(vm.ExternalProviders.First().AuthenticationScheme, returnUrl);
-            }
-
-            return View(vm);
+            ViewData["ReturnUrl"] = returnUrl;
+            return View(model);
         }
 
         [HttpPost]
@@ -121,44 +113,108 @@ namespace Candlewire.Identity.ServerControllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
+            ModelState.Clear();
+
             var returnUrl = model.ReturnUrl;
 
-            ViewData["ReturnUrl"] = returnUrl;
-            if (ModelState.IsValid)
+            // Email model validation
+            if (String.IsNullOrEmpty(model.Email))
             {
-                var matches = await _userManager.GetUsersForClaimAsync(new Claim(JwtClaimTypes.Email, model.Email));
-                if (matches.Count != 1)
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return View(await BuildLoginViewModelAsync(model));
-                }
+                ModelState.AddModelError("", "Email Address is required");
+                model.StepNumber = "1";
+                model.Password = "";
+                return View(model);
+            }
+            else if (model.Email?.IsValidEmail() == false)
+            {
+                ModelState.AddModelError("", "Email Address is not valid");
+                model.StepNumber = "1";
+                model.Password = "";
+                return View(model);
+            }
 
-                var user = matches.FirstOrDefault();
-                var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberLogin, lockoutOnFailure: false);
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation(1, "User logged in.");
-                    return RedirectToLocal(returnUrl);
-                }
+            // Move to next step and return
+            if (model.StepNumber == "1" && String.IsNullOrEmpty(model.Email) == false && model.Email?.IsValidEmail() == true)
+            {
+                model.StepNumber = "2";
+                model.Password = "";
+                return View(model);
+            }
 
-                if (result.RequiresTwoFactor)
+            // Password model validation
+            if (model.StepNumber == "2")
+            {
+                if (String.IsNullOrEmpty(model.Password) == true)
                 {
-                    return RedirectToAction(nameof(Send), new { ReturnUrl = returnUrl, RememberMe = model.RememberLogin });
-                }
-
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning(2, "User account locked out.");
-                    return View("Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return View(await BuildLoginViewModelAsync(model));
+                    ModelState.AddModelError("", "Password is required");
+                    model.StepNumber = "2";
+                    model.Password = "";
+                    return View(model);
                 }
             }
 
-            return View(await BuildLoginViewModelAsync(model));
+            // Check if domain is assigned to external only provider
+            // If so and enabled, the use external login provider
+            var settings1 = _providerManager.GetSettingsByAuthorizedDomain(model.Email.GetDomainName());
+            if (settings1 != null)
+            {
+                var provider = settings1.ProviderCode;
+                var enabled = settings1.ProviderEnabled;
+                var mode = settings1.LoginMode;
+
+                if (mode.ToLower() == "external" && enabled == true)
+                {
+                    // Need to determine how to provide login hint so that email address is automatically sent over
+                    return RedirectToAction("ExternalLogin", new { provider = provider, returnUrl = returnUrl });
+                }
+            }
+            
+            // If forms authentication enabled, validate credentials
+            var settings2 = _providerManager.GetSettingsByProviderCode("forms");
+            if (settings2 != null)
+            {
+                var enabled = settings2.ProviderEnabled;
+
+                if (enabled == true)
+                {
+                    var matches = await _userManager.GetUsersForClaimAsync(new Claim(JwtClaimTypes.Email, model.Email));
+                    if (matches.Count != 1)
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                        model.Password = "";
+                        return View(model);
+                    }
+
+                    var user = matches.FirstOrDefault();
+                    var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberLogin, lockoutOnFailure: false);
+                    if (result.Succeeded)
+                    {
+                        _logger.LogInformation(1, "User logged in.");
+                        return RedirectToLocal(returnUrl);
+                    }
+
+                    if (result.RequiresTwoFactor)
+                    {
+                        return RedirectToAction(nameof(Send), new { ReturnUrl = returnUrl, RememberMe = model.RememberLogin });
+                    }
+
+                    if (result.IsLockedOut)
+                    {
+                        _logger.LogWarning(2, "User account locked out.");
+                        return View("Lockout");
+                    }
+
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    model.StepNumber = "2";
+                    model.Password = "";
+                    return View(model);
+                }
+            }
+
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            model.StepNumber = "1";
+            model.Password = "";
+            return View(model);
         }
 
         [HttpGet]
@@ -211,101 +267,16 @@ namespace Candlewire.Identity.ServerControllers
             return Challenge(properties, provider);
         }
 
-        /*****************************************/
-        /* Helper APIs for the AccountController */
-        /*****************************************/
-        private async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl)
+        private async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl, AuthorizationRequest context)
         {
-            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
-            if (context?.IdP != null)
+            var model = new LoginViewModel
             {
-                return new LoginViewModel
-                {
-                    EnableLocalLogin = false,
-                    ReturnUrl = returnUrl,
-                    Email = context?.LoginHint,
-                    ExternalProviders = new ExternalProvider[] { new ExternalProvider { AuthenticationScheme = context.IdP } }
-                };
-            }
-
-            var schemes = await _schemeProvider.GetAllSchemesAsync();
-
-            var providers = schemes
-                .Where(x => x.DisplayName != null ||
-                            (x.Name.Equals(AccountOptions.WindowsAuthenticationSchemeName, StringComparison.OrdinalIgnoreCase))
-                )
-                .Select(x => new ExternalProvider
-                {
-                    DisplayName = x.DisplayName,
-                    AuthenticationScheme = x.Name
-                }).ToList();
-
-            var allowLocal = true;
-            if (context?.Client?.ClientId != null)
-            {
-                var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
-                if (client != null)
-                {
-                    allowLocal = client.EnableLocalLogin;
-
-                    if (client.IdentityProviderRestrictions != null && client.IdentityProviderRestrictions.Any())
-                    {
-                        providers = providers.Where(provider => client.IdentityProviderRestrictions.Contains(provider.AuthenticationScheme)).ToList();
-                    }
-                }
-            }
-
-            return new LoginViewModel
-            {
-                AllowRememberLogin = AccountOptions.AllowRememberLogin,
-                EnableLocalLogin = allowLocal && AccountOptions.AllowLocalLogin,
-                ReturnUrl = returnUrl,
+                StepNumber = "1",
+                ReturnUrl = returnUrl, 
                 Email = context?.LoginHint,
-                ExternalProviders = providers.ToArray()
+                Password = ""
             };
-        }
-
-        private async Task<LoginViewModel> BuildLoginViewModelAsync(LoginInputModel model)
-        {
-            var vm = await BuildLoginViewModelAsync(model.ReturnUrl);
-            vm.Email = model.Email;
-            vm.RememberLogin = model.RememberLogin;
-            return vm;
-        }
-
-        async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl, AuthorizationRequest context)
-        {
-            var loginProviders = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            var providers = loginProviders
-                .Where(x => x.DisplayName != null)
-                .Select(x => new ExternalProvider
-                {
-                    DisplayName = x.DisplayName,
-                    AuthenticationScheme = x.Name
-                });
-
-            var allowLocal = true;
-            if (context?.Client?.ClientId != null)
-            {
-                var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
-                if (client != null)
-                {
-                    allowLocal = client.EnableLocalLogin;
-
-                    if (client.IdentityProviderRestrictions != null && client.IdentityProviderRestrictions.Any())
-                    {
-                        providers = providers.Where(provider => client.IdentityProviderRestrictions.Contains(provider.AuthenticationScheme));
-                    }
-                }
-            }
-
-            return new LoginViewModel
-            {
-                EnableLocalLogin = allowLocal,
-                ReturnUrl = returnUrl,
-                Email = context?.LoginHint,
-                ExternalProviders = providers.ToArray()
-            };
+            return await Task.FromResult<LoginViewModel>(model);
         }
 
         private async Task<LogoutViewModel> BuildLogoutViewModelAsync(string logoutId, Boolean authenticated)
