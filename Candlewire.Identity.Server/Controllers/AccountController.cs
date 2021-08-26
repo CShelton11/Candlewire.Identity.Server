@@ -193,15 +193,15 @@ namespace Candlewire.Identity.ServerControllers
                         return RedirectToLocal(returnUrl);
                     }
 
-                    if (result.RequiresTwoFactor)
-                    {
-                        return RedirectToAction(nameof(Send), new { ReturnUrl = returnUrl, RememberMe = model.RememberLogin });
-                    }
-
                     if (result.IsLockedOut)
                     {
                         _logger.LogWarning(2, "User account locked out.");
                         return View("Lockout");
+                    }
+
+                    if (result.RequiresTwoFactor)
+                    {
+                        return RedirectToAction(nameof(Send), new { ReturnUrl = returnUrl, RememberMe = model.RememberLogin });
                     }
 
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
@@ -600,23 +600,38 @@ namespace Candlewire.Identity.ServerControllers
             // it doesn't expose an API to issue additional claims from the login workflow
             var principal = await _signInManager.CreateUserPrincipalAsync(user);
             additionalLocalClaims.AddRange(principal.Claims);
+
             var name = principal.FindFirst(JwtClaimTypes.Name)?.Value ?? user.Id;
             var locked = await _userManager.IsLockedOutAsync(user).ConfigureAwait(false);
+            var twofa = await _userManager.RequiresTwoFactorAuthentication(user).ConfigureAwait(false);
+
             if (locked == true)
             {
                 return View("Lockout");
             }
-            else
-            {
-                // Sign into identity server, signout of external provider
-                await _events.RaiseAsync(new UserLoginSuccessEvent(provider, providerUserId, user.Id, name));
-                await _signInManager.SignInAsync(user, new AuthenticationProperties { });
-                await _signInManager.SignoutExternalAsync(HttpContext);
 
-                // Perform redirect
-                if (returnUrl != null) { return Redirect(returnUrl); }
-                else { return RedirectToAction("Index", new { controller = "Home" }); }
+            if (twofa == true)
+            {
+                // This allows two factor authentication for externally logged in users
+                // Stripped from SignInOrTwoFactorAsync protect method within identity server
+                var userId = await _userManager.GetUserIdAsync(user);
+                
+                var identity = new ClaimsIdentity(IdentityConstants.TwoFactorUserIdScheme);
+                identity.AddClaim(new Claim(ClaimTypes.Name, userId));
+                
+                await HttpContext.SignInAsync(IdentityConstants.TwoFactorUserIdScheme, new ClaimsPrincipal(identity));
+                return RedirectToAction(nameof(Send), new { ReturnUrl = returnUrl, RememberMe = false });
             }
+
+            // Sign into identity server, signout of external provider
+            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, providerUserId, user.Id, name));
+            await _signInManager.SignInAsync(user, new AuthenticationProperties { });
+            await _signInManager.SignoutExternalAsync(HttpContext);
+
+            // Perform redirect
+            if (returnUrl != null) { return Redirect(returnUrl); }
+            else { return RedirectToAction("Index", new { controller = "Home" }); }
+
         }
 
         [HttpGet]
